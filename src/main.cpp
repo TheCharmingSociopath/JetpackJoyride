@@ -3,6 +3,7 @@
 #include "ball.h"
 #include "platform.h"
 #include "coin.h"
+#include "firebeam.h"
 #include "fireline.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
@@ -18,8 +19,9 @@ GLFWwindow *window;
 **************************/
 
 Ball ball;
+Firebeam firebeam;
 Fireline fireline;
-bounding_box_t b, c;
+bounding_box_t b_ball, b_coin, b_fireline, b_firebeam;
 vector <Platform> platform;
 vector <Coin> coin;
 
@@ -72,6 +74,7 @@ void draw() {
     {
         coin[i].draw(VP);
     }
+    firebeam.draw(VP);
     fireline.draw(VP);
 }
 
@@ -103,6 +106,7 @@ void tick_input(GLFWwindow *window) {
 
 void tick_elements() {
     ball.tick();
+    firebeam.tick();
     camera_rotation_angle += 1;
 }
 
@@ -124,7 +128,9 @@ void initGL(GLFWwindow *window, int width, int height) {
         coin.push_back(Coin(11 + i, 2, COLOR_COIN_YELLOW));
     }
 
-    fireline = Fireline(camera_center_x, 1, COLOR_RED);
+    firebeam = Firebeam(camera_center_x + 30, 1, COLOR_RED);
+    fireline = Fireline(camera_center_x + 40, 1, COLOR_RED, rand() % 90);
+
 
     // Create and compile our GLSL program from the shaders
     programID = LoadShaders("Sample_GL.vert", "Sample_GL.frag");
@@ -160,10 +166,10 @@ int main(int argc, char **argv) {
     /* Draw in loop */
     while (!glfwWindowShouldClose(window)) {
         // Process timers
-        b.x = ball.position.x;
-        b.y = ball.position.y;
-        b.width = 2;
-        b.height = 3;
+        b_ball.x = ball.position.x;
+        b_ball.y = ball.position.y;
+        b_ball.width = 2;
+        b_ball.height = 3;
 
         if (t60.processTick()) {
             // 60 fps
@@ -172,12 +178,12 @@ int main(int argc, char **argv) {
             // Coin's collission with player
             for(int i=0; i<coin.size(); ++i)
             {
-                c.x = coin[i].position.x;
-                c.y = coin[i].position.y;
-                c.height = 0.5;
-                c.width = 0.5;
+                b_coin.x = coin[i].position.x;
+                b_coin.y = coin[i].position.y;
+                b_coin.height = 0.5;
+                b_coin.width = 0.5;
 
-                if (detect_collision(b, c))
+                if (detect_collision(b_ball, b_coin))
                 {
                     if (coin[i].color.g == 0)
                         score += 10;
@@ -185,14 +191,39 @@ int main(int argc, char **argv) {
                         score += 5;
                     else
                         ++score;
-                    cout << "Score: " << score << endl;
                     coin.erase(coin.begin() + i);
                 }
             }
-            //------------------------------------------------------
+            //======================================================
+
+            // Collission with firebeams
+            b_firebeam.x = firebeam.position.x;
+            b_firebeam.y = firebeam.position.y;
+            b_firebeam.height = 0.2;
+            b_firebeam.width = 8;
+
+            if (detect_collision(b_firebeam, b_ball))
+            {
+                --lives;
+                ball = Ball(screen_center_x, -6, COLOR_BODY);
+            }
+            //======================================================
+
+            // Collission with firelines
+            b_fireline.x = fireline.position.x;
+            b_fireline.y = fireline.position.y;
+            b_fireline.height = 0.2;
+            b_fireline.width = 8;
+
+            if (detect_collision(b_fireline, b_ball))
+            {
+                --lives;
+                ball = Ball(screen_center_x, -6, COLOR_BODY);
+            }
+            //======================================================
 
             // Generate objects
-            if ((int)(camera_center_x * 10) % 2500 == 0 and camera_center_x != 0)
+            if ((int)(camera_center_x * 10) % 2500 == 0 and (int)camera_center_x != 0)
             {
                 for (int i=0; i<10; i += 2)
                 {
@@ -200,7 +231,7 @@ int main(int argc, char **argv) {
                     coin.push_back(Coin(camera_center_x + 11 + i, 2, COLOR_COIN_RED));
                 }
             }
-            else if ((int)(camera_center_x * 10) % 1500 == 0 and camera_center_x != 0)
+            else if ((int)(camera_center_x * 10) % 1500 == 0 and (int)camera_center_x != 0)
             {
                 for (int i=0; i<10; i += 2)
                 {
@@ -208,7 +239,12 @@ int main(int argc, char **argv) {
                     coin.push_back(Coin(camera_center_x + 11 + i, 2, COLOR_COIN_GREEN));
                 }
             }
-            else if ((int)(camera_center_x * 10) % 500 == 0 and camera_center_x != 0)
+            else if ((int)(camera_center_x * 10) % 1000 == 0 and camera_center_x != 0)
+            {
+                //make fire line
+                fireline = Fireline(camera_center_x + 10, rand() % 7, COLOR_RED, 90);
+            }
+            else if ((int)(camera_center_x * 10) % 500 == 0 and (int)camera_center_x != 0)
             {
                 for (int i=0; i<10; i += 2)
                 {
@@ -216,12 +252,30 @@ int main(int argc, char **argv) {
                     coin.push_back(Coin(camera_center_x + 11 + i, 2, COLOR_COIN_YELLOW));
                 }
             }
-            else if ((int)(camera_center_x * 10) % 250 == 0 and camera_center_x != 0)
+            else if ((int)(camera_center_x * 10) % 250 == 0 and camera_center_x != 0 and (int)camera_center_x != 25)
             {
                 //make fire line
-                fireline = Fireline(camera_center_x + 10, 1, COLOR_RED);
+                firebeam = Firebeam(camera_center_x + 10, rand() % 7, COLOR_RED);
+            }
+            else if ((int)(camera_center_x * 10) % 50 == 0 and camera_center_x != 0 and (int)camera_center_x != 25)
+            {
+                //make fire line
+                coin.push_back(Coin(camera_center_x + 50, (rand() % 5) - 2, COLOR_COIN_YELLOW));
             }
             // ------------------------------------------------------
+            if ((int)camera_center_x % 10 == 0)
+            {
+                cout << "Score: " << score << endl;
+                cout << "Lives: " << lives << endl;
+            }
+            if (lives == 0)
+            {
+                cout << "Game Over :(" << endl;
+                cout << "Score: " << score << endl;
+                cout << "Lives: " << lives << endl;
+                return 0;
+            }cout << "Score: " << score << endl;
+                cout << "Lives: " << lives << endl;
             draw();
             // Swap Frame Buffer in double buffering
             glfwSwapBuffers(window);

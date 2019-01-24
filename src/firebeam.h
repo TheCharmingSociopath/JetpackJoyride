@@ -1,14 +1,14 @@
 #include "main.h"
 
-#ifndef FIRELINE_H
-#define FIRELINE_H
+#ifndef FIREBEAM_H
+#define FIREBEAM_H
 #define GLM_ENABLE_EXPERIMENTAL
 
 
-class Fireline {
+class Firebeam {
 public:
-    Fireline() {}
-    Fireline(float x, float y, color_t color, float rot);
+    Firebeam() {}
+    Firebeam(float x, float y, color_t color);
     glm::vec3 position;
     float rotation;
     void draw(glm::mat4 VP);
@@ -19,4 +19,4 @@ private:
     VAO *object;
 };
 
-#endif // FIRELINE_H
+#endif // FIREBEAM_H
