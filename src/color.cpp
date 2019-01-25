@@ -9,3 +9,4 @@ const color_t COLOR_BODY = { 100, 100, 100 };
 const color_t COLOR_COIN_YELLOW = { 255, 225, 0 };
 const color_t COLOR_COIN_RED = { 255, 0, 0 }; // 10 Points
 const color_t COLOR_COIN_GREEN = { 0, 255, 0 }; // 5 Points
+const color_t COLOR_BLUE = { 0, 167, 222 };

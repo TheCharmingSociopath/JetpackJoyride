@@ -8,7 +8,7 @@
 #include "magnet.h"
 #include "boomerang.h"
 #include "speed.h"
-#include "iomanip"
+#include "baloon.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
 
@@ -29,13 +29,14 @@ Magnet magnet;
 Boomerang boomerang;
 Speed speed;
 
-bounding_box_t b_ball, b_coin, b_fireline, b_firebeam, b_boomerang, b_speed;
+bounding_box_t b_ball, b_coin, b_fireline, b_firebeam, b_boomerang, b_speed, b_baloon;
 vector <Platform> platform;
 vector <Coin> coin;
+vector <Baloon> baloon;
 
 float screen_zoom = 1.0f, screen_center_x = 0.0f, screen_center_y = 0.0f, camera_center_x = 0.0f, camera_center_y = 0.0f;
 float camera_rotation_angle = 0.0f;
-int score = 0, lives = 5, tock = 0, speed_time = 0, coins_collected = 0;
+int score = 0, lives = 5, tock = 0, speed_time = 0, coins_collected = 0, last_baloon;
 float HORIZONTAL_MOVEMENT_VALUE = 0.1f;
 
 Timer t60(1.0 / 60);
@@ -83,6 +84,10 @@ void draw() {
     {
         coin[i].draw(VP);
     }
+    for (int i=0; i < baloon.size(); ++i)
+    {
+        baloon[i].draw(VP);
+    }
     firebeam.draw(VP);
     fireline.draw(VP);
     magnet.draw(VP);
@@ -96,6 +101,7 @@ void tick_input(GLFWwindow *window) {
     int space = glfwGetKey(window, GLFW_KEY_SPACE);
     int up = glfwGetKey(window, GLFW_KEY_UP);
     int down = glfwGetKey(window, GLFW_KEY_DOWN);
+    int b = glfwGetKey(window, GLFW_KEY_B);
 
     if (left) {
         camera_center_x -= HORIZONTAL_MOVEMENT_VALUE;
@@ -116,6 +122,10 @@ void tick_input(GLFWwindow *window) {
     if (down) {
         screen_zoom -= 0.01f;
     }
+    if (b and tock - last_baloon > 30) {
+        baloon.push_back(Baloon(ball.position.x + 0.8, ball.position.y, COLOR_BLUE));
+        last_baloon = tock;
+    }
 }
 
 void tick_elements() {
@@ -123,6 +133,11 @@ void tick_elements() {
     firebeam.tick();
     boomerang.tick();
     speed.tick();
+
+    for(int i=0; i<baloon.size(); ++i)
+    {
+        baloon[i].tick();
+    }
 
     float r = sqrt((ball.position.x - magnet.position.x) * (ball.position.x - magnet.position.x) + (ball.position.y - magnet.position.y) * (ball.position.y - magnet.position.y));
 
@@ -183,7 +198,6 @@ void initGL(GLFWwindow *window, int width, int height) {
     cout << "GLSL: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << endl;
 }
 
-
 int main(int argc, char **argv) {
     srand(time(0));
     int width  = 600;
@@ -206,123 +220,10 @@ int main(int argc, char **argv) {
             // 60 fps
             // OpenGL Draw commands
 
-            // Coin's collission with player
-            for(int i=0; i<coin.size(); ++i)
-            {
-                b_coin.x = coin[i].position.x;
-                b_coin.y = coin[i].position.y;
-                b_coin.height = 0.5;
-                b_coin.width = 0.5;
+            check_collisions();
 
-                if (detect_collision(b_ball, b_coin))
-                {
-                    if (coin[i].color.g == 0)
-                        coins_collected += 10;
-                    else if(coin[i].color.r == 0)
-                        coins_collected += 5;
-                    else
-                        ++coins_collected;
-                    coin.erase(coin.begin() + i);
-                    score += 5;
-                }
-            }
-            //======================================================
+            generate_obstacles();
 
-            // Collission with firebeams
-            b_firebeam.x = firebeam.position.x;
-            b_firebeam.y = firebeam.position.y;
-            b_firebeam.height = 0.2;
-            b_firebeam.width = 8;
-
-            if (detect_collision(b_firebeam, b_ball))
-            {
-                --lives;
-                ball = Ball(screen_center_x, -6, COLOR_BODY);
-            }
-            //======================================================
-
-            // Collission with firelines
-            b_fireline.x = fireline.position.x;
-            b_fireline.y = fireline.position.y;
-            b_fireline.width = 6 * cos(fireline.rotation / 180 * pi);
-            b_fireline.height = 6 * sin(fireline.rotation / 180 * pi);
-
-            if(detect_collision(b_ball, b_fireline) and detect_collision_fireline())
-            {
-                --lives;
-                ball = Ball(screen_center_x, -6, COLOR_BODY);
-            }
-            //======================================================
-
-            // Collission with boomerang
-            b_boomerang.x = boomerang.position.x;
-            b_boomerang.y = boomerang.position.y;
-            b_boomerang.width = 1.4f;
-            b_boomerang.height = 1.4f;
-
-            if(detect_collision(b_ball, b_boomerang))
-            {
-                --lives;
-                ball = Ball(screen_center_x, -6, COLOR_BODY);
-            }
-            //======================================================
-
-            // Collission with speed
-            b_speed.x = speed.position.x;
-            b_speed.y = speed.position.y;
-            b_speed.width = 1.6f;
-            b_speed.height = 2.8f;
-
-            if(detect_collision(b_ball, b_speed))
-            {
-                HORIZONTAL_MOVEMENT_VALUE += 0.1f;
-                speed_time = tock;
-                speed.position.y = 50;
-            }
-            //======================================================
-
-            // Generate objects
-            if ((int)(camera_center_x * 10) % 2500 == 0 and (int)camera_center_x != 0)
-            {
-                for (int i=0; i<10; i += 2)
-                {
-                    coin.push_back(Coin(camera_center_x + 10 + i, 1, COLOR_COIN_RED));
-                    coin.push_back(Coin(camera_center_x + 11 + i, 2, COLOR_COIN_RED));
-                }
-            }
-            else if ((int)(camera_center_x * 10) % 1500 == 0 and (int)camera_center_x != 0)
-            {
-                for (int i=0; i<10; i += 2)
-                {
-                    coin.push_back(Coin(camera_center_x + 10 + i, 1, COLOR_COIN_GREEN));
-                    coin.push_back(Coin(camera_center_x + 11 + i, 2, COLOR_COIN_GREEN));
-                }
-                magnet = Magnet(camera_center_x + 20, 7, COLOR_RED);                
-            }
-            else if ((int)(camera_center_x * 10) % 1000 == 0 and camera_center_x != 0)
-            {
-                //make fire line
-                fireline = Fireline(camera_center_x + 10, rand() % 7, COLOR_RED, 90);
-            }
-            else if ((int)(camera_center_x * 10) % 500 == 0 and (int)camera_center_x != 0)
-            {
-                for (int i=0; i<10; i += 2)
-                {
-                    coin.push_back(Coin(camera_center_x + 10 + i, 1, COLOR_COIN_YELLOW));
-                    coin.push_back(Coin(camera_center_x + 11 + i, 2, COLOR_COIN_YELLOW));
-                }
-            }
-            else if ((int)(camera_center_x * 10) % 250 == 0 and camera_center_x != 0 and (int)camera_center_x != 25)
-            {
-                //make fire line
-                firebeam = Firebeam(camera_center_x + 10, rand() % 7, COLOR_RED);
-            }
-            else if ((int)(camera_center_x * 10) % 50 == 0 and camera_center_x != 0 and (int)camera_center_x != 25)
-            {
-                //make fire line
-                coin.push_back(Coin(camera_center_x + 50, (rand() % 5) - 2, COLOR_COIN_YELLOW));
-            }
-            // ------------------------------------------------------
             if ((int)camera_center_x % 10 == 0)
             {
                 cout << "Score: " << score << endl;
@@ -388,21 +289,156 @@ void reset_screen() {
 
 bool detect_collision_fireline()
 {
-    float m = tan(fireline.rotation / 180 * pi), x1 = ball.position.x + 1, x2 = ball.position.x - 1,
+    float a = tan(fireline.rotation / 180 * pi), x1 = ball.position.x + 1, x2 = ball.position.x - 1,
     x3 = ball.position.x + 1, x4 = ball.position.x - 1, y1 = ball.position.x + 2, y2 = ball.position.x + 2,
-    y3 = ball.position.x - 1, y4 = ball.position.x - 1;
+    y3 = ball.position.x - 1, y4 = ball.position.x - 1, b = -1,
+    c = fireline.position.y - (a * fireline.position.x);
 
-    if ((y1 - fireline.position.y) / (x1 - fireline.position.x) - m  < 0 and 
-         (y2 - fireline.position.y) / (x2 - fireline.position.x) - m  < 0 and
-         (y3 - fireline.position.y) / (x3 - fireline.position.x) - m  < 0 and
-         (y4 - fireline.position.y) / (x4 - fireline.position.x) - m < 0 )
-         return false;
+    if ( abs((a * x1 + b * y1 + c) / sqrt(a*a + b*b)) <= 10 or
+    abs((a * x2 + b * y2 + c) / sqrt(a*a + b*b)) <= 10 or
+    abs((a * x3 + b * y3 + c) / sqrt(a*a + b*b)) <= 10 or
+    abs((a * x4 + b * y4 + c) / sqrt(a*a + b*b)) <= 10)
+        return true;
 
-    if ((y1 - fireline.position.y) / (x1 - fireline.position.x) - m  > 0 and 
-         (y2 - fireline.position.y) / (x2 - fireline.position.x) - m  > 0 and
-         (y3 - fireline.position.y) / (x3 - fireline.position.x) - m  > 0 and
-         (y4 - fireline.position.y) / (x4 - fireline.position.x) - m > 0 )
-         return false;
+    return false;
+}
 
-    return true;
+void check_collisions()
+{
+    // Coin's collission with player
+    for(int i=0; i<coin.size(); ++i)
+    {
+        b_coin.x = coin[i].position.x;
+        b_coin.y = coin[i].position.y;
+        b_coin.height = 0.5;
+        b_coin.width = 0.5;
+
+        if (detect_collision(b_ball, b_coin))
+        {
+            if (coin[i].color.g == 0)
+                coins_collected += 10;
+            else if(coin[i].color.r == 0)
+                coins_collected += 5;
+            else
+                ++coins_collected;
+            coin.erase(coin.begin() + i);
+            score += 5;
+        }
+    }
+    //======================================================
+
+    // Collission with firebeams
+    b_firebeam.x = firebeam.position.x;
+    b_firebeam.y = firebeam.position.y;
+    b_firebeam.height = 0.2;
+    b_firebeam.width = 8;
+
+    if (detect_collision(b_firebeam, b_ball))
+    {
+        --lives;
+        ball = Ball(screen_center_x, -6, COLOR_BODY);
+    }
+    //======================================================
+
+    // Collission with firelines
+    b_fireline.x = fireline.position.x;
+    b_fireline.y = fireline.position.y;
+    b_fireline.width = 7.2 * cos(fireline.rotation / 180 * pi);
+    b_fireline.height = 7.2 * sin(fireline.rotation / 180 * pi);
+
+    if(detect_collision(b_ball, b_fireline) and detect_collision_fireline())
+    {
+        --lives;
+        ball = Ball(screen_center_x, -6, COLOR_BODY);
+    }
+    //======================================================
+
+    // Collission with boomerang
+    b_boomerang.x = boomerang.position.x;
+    b_boomerang.y = boomerang.position.y;
+    b_boomerang.width = 1.4f;
+    b_boomerang.height = 1.4f;
+
+    if(detect_collision(b_ball, b_boomerang))
+    {
+        --lives;
+        ball = Ball(screen_center_x, -6, COLOR_BODY);
+    }
+    //======================================================
+
+    // Collission with speed
+    b_speed.x = speed.position.x;
+    b_speed.y = speed.position.y;
+    b_speed.width = 1.6f;
+    b_speed.height = 2.8f;
+
+    if(detect_collision(b_ball, b_speed))
+    {
+        HORIZONTAL_MOVEMENT_VALUE += 0.1f;
+        speed_time = tock;
+        speed.position.y = 50;
+    }
+    //======================================================
+
+    // Collission of baloon with lazer
+    for (int i=0; i < baloon.size(); ++i)
+    {
+        b_baloon.x = baloon[i].position.x;
+        b_baloon.y = baloon[i].position.y;
+        b_baloon.width = 1.6f;
+        b_baloon.height = 1.6f;
+
+        // if(detect_collision(b_ball, b_baloon))
+        // {
+        //     HORIZONTAL_MOVEMENT_VALUE += 0.1f;
+        //     speed_time = tock;
+        //     speed.position.y = 50;
+        // }
+    }
+    //======================================================
+}
+
+void generate_obstacles()
+{
+    // Generate objects
+    if ((int)(camera_center_x * 10) % 2500 == 0 and (int)camera_center_x != 0)
+    {
+        for (int i=0; i<10; i += 2)
+        {
+            coin.push_back(Coin(camera_center_x + 10 + i, 1, COLOR_COIN_RED));
+            coin.push_back(Coin(camera_center_x + 11 + i, 2, COLOR_COIN_RED));
+        }
+    }
+    else if ((int)(camera_center_x * 10) % 1500 == 0 and (int)camera_center_x != 0)
+    {
+        for (int i=0; i<10; i += 2)
+        {
+            coin.push_back(Coin(camera_center_x + 10 + i, 1, COLOR_COIN_GREEN));
+            coin.push_back(Coin(camera_center_x + 11 + i, 2, COLOR_COIN_GREEN));
+        }
+        magnet = Magnet(camera_center_x + 20, 7, COLOR_RED);                
+    }
+    else if ((int)(camera_center_x * 10) % 1000 == 0 and camera_center_x != 0)
+    {
+        //make fire line
+        fireline = Fireline(camera_center_x + 10, rand() % 7, COLOR_RED, rand() % 70);
+    }
+    else if ((int)(camera_center_x * 10) % 500 == 0 and (int)camera_center_x != 0)
+    {
+        for (int i=0; i<10; i += 2)
+        {
+            coin.push_back(Coin(camera_center_x + 10 + i, 1, COLOR_COIN_YELLOW));
+            coin.push_back(Coin(camera_center_x + 11 + i, 2, COLOR_COIN_YELLOW));
+        }
+    }
+    else if ((int)(camera_center_x * 10) % 250 == 0 and camera_center_x != 0 and (int)camera_center_x != 25)
+    {
+        //make fire beam
+        firebeam = Firebeam(camera_center_x + 10, rand() % 7, COLOR_RED);
+    }
+    else if ((int)(camera_center_x * 10) % 50 == 0 and camera_center_x != 0 and (int)camera_center_x != 25)
+    {
+        coin.push_back(Coin(camera_center_x + 50, (rand() % 5) - 2, COLOR_COIN_YELLOW));
+    }
+    // ------------------------------------------------------
 }
