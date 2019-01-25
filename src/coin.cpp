@@ -10,7 +10,7 @@ Coin::Coin(float x, float y, color_t inp_color) {
     color = inp_color;
 
 	double arg = 0;
-	const double pi = 3.14159265358979323846;
+	// const double pi = 3.14159265358979323846;
 
     // 1000 Triangles
 

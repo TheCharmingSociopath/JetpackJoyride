@@ -5,6 +5,10 @@
 #include "coin.h"
 #include "firebeam.h"
 #include "fireline.h"
+#include "magnet.h"
+#include "boomerang.h"
+#include "speed.h"
+#include "iomanip"
 
 #define GLM_ENABLE_EXPERIMENTAL
 
@@ -21,13 +25,18 @@ GLFWwindow *window;
 Ball ball;
 Firebeam firebeam;
 Fireline fireline;
-bounding_box_t b_ball, b_coin, b_fireline, b_firebeam;
+Magnet magnet;
+Boomerang boomerang;
+Speed speed;
+
+bounding_box_t b_ball, b_coin, b_fireline, b_firebeam, b_boomerang, b_speed;
 vector <Platform> platform;
 vector <Coin> coin;
 
-float screen_zoom = 1, screen_center_x = 0.0f, screen_center_y = 0.0f, camera_center_x = 0.0f, camera_center_y = 0.0f;
-float camera_rotation_angle = 0;
-int score = 0, lives = 5;
+float screen_zoom = 1.0f, screen_center_x = 0.0f, screen_center_y = 0.0f, camera_center_x = 0.0f, camera_center_y = 0.0f;
+float camera_rotation_angle = 0.0f;
+int score = 0, lives = 5, tock = 0, speed_time = 0, coins_collected = 0;
+float HORIZONTAL_MOVEMENT_VALUE = 0.1f;
 
 Timer t60(1.0 / 60);
 
@@ -76,6 +85,9 @@ void draw() {
     }
     firebeam.draw(VP);
     fireline.draw(VP);
+    magnet.draw(VP);
+    boomerang.draw(VP);
+    speed.draw(VP);
 }
 
 void tick_input(GLFWwindow *window) {
@@ -94,19 +106,36 @@ void tick_input(GLFWwindow *window) {
         ball.position.x = camera_center_x;
     }
     if (space) {
-        ball.speed = 0.1;
+        ball.speed = 0.1f;
     }
     if (up) {
-        screen_zoom += 0.01;
+        screen_zoom += 0.01f;
+        if (screen_zoom > 1.0f)
+            screen_center_y = ball.position.y;
     }
     if (down) {
-        screen_zoom -= 0.01;
+        screen_zoom -= 0.01f;
     }
 }
 
 void tick_elements() {
     ball.tick();
     firebeam.tick();
+    boomerang.tick();
+    speed.tick();
+
+    float r = sqrt((ball.position.x - magnet.position.x) * (ball.position.x - magnet.position.x) + (ball.position.y - magnet.position.y) * (ball.position.y - magnet.position.y));
+
+    if (r <= 100.0f and r >= 3.0f)
+    {
+        ball.position.x -= 4 * ((ball.position.x - magnet.position.x) / pow(r, 3));
+        ball.position.y -= 4 * ((ball.position.y - magnet.position.y) / pow(r, 3));
+    }
+    if(r < 3.0f)
+    {
+        ball.position.y = magnet.position.y - 1.0f;
+    }
+
     camera_rotation_angle += 1;
 }
 
@@ -130,13 +159,14 @@ void initGL(GLFWwindow *window, int width, int height) {
 
     firebeam = Firebeam(camera_center_x + 30, 1, COLOR_RED);
     fireline = Fireline(camera_center_x + 40, 1, COLOR_RED, rand() % 90);
-
+    magnet = Magnet(camera_center_x + 50, 7, COLOR_RED);
+    boomerang = Boomerang(camera_center_x + 10, 2, COLOR_BLACK);
+    speed = Speed(camera_center_x + 1000, -5, COLOR_COIN_YELLOW);
 
     // Create and compile our GLSL program from the shaders
     programID = LoadShaders("Sample_GL.vert", "Sample_GL.frag");
     // Get a handle for our "MVP" uniform
     Matrices.MatrixID = glGetUniformLocation(programID, "MVP");
-
 
     reshapeWindow (window, width, height);
 
@@ -172,6 +202,7 @@ int main(int argc, char **argv) {
         b_ball.height = 3;
 
         if (t60.processTick()) {
+            ++tock;
             // 60 fps
             // OpenGL Draw commands
 
@@ -186,12 +217,13 @@ int main(int argc, char **argv) {
                 if (detect_collision(b_ball, b_coin))
                 {
                     if (coin[i].color.g == 0)
-                        score += 10;
+                        coins_collected += 10;
                     else if(coin[i].color.r == 0)
-                        score += 5;
+                        coins_collected += 5;
                     else
-                        ++score;
+                        ++coins_collected;
                     coin.erase(coin.begin() + i);
+                    score += 5;
                 }
             }
             //======================================================
@@ -212,13 +244,40 @@ int main(int argc, char **argv) {
             // Collission with firelines
             b_fireline.x = fireline.position.x;
             b_fireline.y = fireline.position.y;
-            b_fireline.height = 0.2;
-            b_fireline.width = 8;
+            b_fireline.width = 6 * cos(fireline.rotation / 180 * pi);
+            b_fireline.height = 6 * sin(fireline.rotation / 180 * pi);
 
-            if (detect_collision(b_fireline, b_ball))
+            if(detect_collision(b_ball, b_fireline) and detect_collision_fireline())
             {
                 --lives;
                 ball = Ball(screen_center_x, -6, COLOR_BODY);
+            }
+            //======================================================
+
+            // Collission with boomerang
+            b_boomerang.x = boomerang.position.x;
+            b_boomerang.y = boomerang.position.y;
+            b_boomerang.width = 1.4f;
+            b_boomerang.height = 1.4f;
+
+            if(detect_collision(b_ball, b_boomerang))
+            {
+                --lives;
+                ball = Ball(screen_center_x, -6, COLOR_BODY);
+            }
+            //======================================================
+
+            // Collission with speed
+            b_speed.x = speed.position.x;
+            b_speed.y = speed.position.y;
+            b_speed.width = 1.6f;
+            b_speed.height = 2.8f;
+
+            if(detect_collision(b_ball, b_speed))
+            {
+                HORIZONTAL_MOVEMENT_VALUE += 0.1f;
+                speed_time = tock;
+                speed.position.y = 50;
             }
             //======================================================
 
@@ -238,6 +297,7 @@ int main(int argc, char **argv) {
                     coin.push_back(Coin(camera_center_x + 10 + i, 1, COLOR_COIN_GREEN));
                     coin.push_back(Coin(camera_center_x + 11 + i, 2, COLOR_COIN_GREEN));
                 }
+                magnet = Magnet(camera_center_x + 20, 7, COLOR_RED);                
             }
             else if ((int)(camera_center_x * 10) % 1000 == 0 and camera_center_x != 0)
             {
@@ -274,8 +334,29 @@ int main(int argc, char **argv) {
                 cout << "Score: " << score << endl;
                 cout << "Lives: " << lives << endl;
                 return 0;
-            }cout << "Score: " << score << endl;
-                cout << "Lives: " << lives << endl;
+            }
+            if(magnet.time >= 600)
+            {
+                magnet = Magnet(camera_center_x + 10, 7, COLOR_RED);
+            }
+            if(boomerang.time >= 800)
+            {
+                boomerang = Boomerang(camera_center_x + 15, 2, COLOR_BLACK);
+            }
+
+            if(tock % 600 == 0)
+            {
+                speed = Speed(camera_center_x + 20, -1, COLOR_COIN_YELLOW);
+            }
+
+            if(HORIZONTAL_MOVEMENT_VALUE > 0.1f and tock - speed_time > 300.0)
+            {
+                HORIZONTAL_MOVEMENT_VALUE = 0.1f;
+            }
+
+            if(tock % 60 == 0)
+                ++score;     
+
             draw();
             // Swap Frame Buffer in double buffering
             glfwSwapBuffers(window);
@@ -305,3 +386,23 @@ void reset_screen() {
     Matrices.projection = glm::ortho(left, right, bottom, top, 0.1f, 500.0f);
 }
 
+bool detect_collision_fireline()
+{
+    float m = tan(fireline.rotation / 180 * pi), x1 = ball.position.x + 1, x2 = ball.position.x - 1,
+    x3 = ball.position.x + 1, x4 = ball.position.x - 1, y1 = ball.position.x + 2, y2 = ball.position.x + 2,
+    y3 = ball.position.x - 1, y4 = ball.position.x - 1;
+
+    if ((y1 - fireline.position.y) / (x1 - fireline.position.x) - m  < 0 and 
+         (y2 - fireline.position.y) / (x2 - fireline.position.x) - m  < 0 and
+         (y3 - fireline.position.y) / (x3 - fireline.position.x) - m  < 0 and
+         (y4 - fireline.position.y) / (x4 - fireline.position.x) - m < 0 )
+         return false;
+
+    if ((y1 - fireline.position.y) / (x1 - fireline.position.x) - m  > 0 and 
+         (y2 - fireline.position.y) / (x2 - fireline.position.x) - m  > 0 and
+         (y3 - fireline.position.y) / (x3 - fireline.position.x) - m  > 0 and
+         (y4 - fireline.position.y) / (x4 - fireline.position.x) - m > 0 )
+         return false;
+
+    return true;
+}

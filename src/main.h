@@ -17,7 +17,7 @@
 
 // CONSTANTS =================================
 const int ground = 4;
-const float HORIZONTAL_MOVEMENT_VALUE = 0.1;
+const double pi = 3.14159265358979323846;
 //============================================
 
 struct color_t {
@@ -78,6 +78,7 @@ struct bounding_box_t {
 };
 
 bool detect_collision(bounding_box_t a, bounding_box_t b);
+bool detect_collision_fireline();
 
 extern float screen_zoom, screen_center_x, screen_center_y;
 void reset_screen();
