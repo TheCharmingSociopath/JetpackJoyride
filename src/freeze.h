@@ -1,17 +1,17 @@
 #include "main.h"
 
-#ifndef SPEED_H
-#define SPEED_H
+#ifndef FREEZE_H
+#define FREEZE_H
 #define GLM_ENABLE_EXPERIMENTAL
 
 
-class Speed {
+class Freeze {
 public:
-    Speed() {}
-    Speed(float x, float y, color_t color);
+    Freeze() {}
+    Freeze(float x, float y, color_t color);
     glm::vec3 position;
     float rotation;
-    bool direction = false;
+    float speed_y;
     void draw(glm::mat4 VP);
     void set_position(float x, float y);
     void tick();
@@ -19,4 +19,4 @@ private:
     VAO *object;
 };
 
-#endif // SPEED_H
+#endif // FREEZE_H

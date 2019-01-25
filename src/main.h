@@ -95,5 +95,9 @@ extern const color_t COLOR_COIN_RED;
 extern const color_t COLOR_COIN_GREEN;
 extern const color_t COLOR_RED;
 extern const color_t COLOR_BLUE;
+extern const color_t COLOR_LIFE;
+extern const color_t COLOR_SHIELD;
+extern const color_t COLOR_EVIL;
+extern const color_t COLOR_FREEZE;
 
 #endif

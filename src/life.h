@@ -1,14 +1,14 @@
 #include "main.h"
 
-#ifndef SPEED_H
-#define SPEED_H
+#ifndef LIFE_H
+#define LIFE_H
 #define GLM_ENABLE_EXPERIMENTAL
 
 
-class Speed {
+class Life {
 public:
-    Speed() {}
-    Speed(float x, float y, color_t color);
+    Life() {}
+    Life(float x, float y, color_t color);
     glm::vec3 position;
     float rotation;
     bool direction = false;
@@ -19,4 +19,4 @@ private:
     VAO *object;
 };
 
-#endif // SPEED_H
+#endif // LIFE_H

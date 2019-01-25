@@ -9,6 +9,10 @@
 #include "boomerang.h"
 #include "speed.h"
 #include "baloon.h"
+#include "life.h"
+#include "shield.h"
+#include "dragon.h"
+#include "freeze.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
 
@@ -28,11 +32,15 @@ Fireline fireline;
 Magnet magnet;
 Boomerang boomerang;
 Speed speed;
+Life life;
+Shield shield;
+Dragon dragon;
 
-bounding_box_t b_ball, b_coin, b_fireline, b_firebeam, b_boomerang, b_speed, b_baloon;
+bounding_box_t b_ball, b_coin, b_fireline, b_firebeam, b_boomerang, b_speed, b_baloon, b_life, b_shield, b_freeze;
 vector <Platform> platform;
 vector <Coin> coin;
 vector <Baloon> baloon;
+vector <Freeze> freeze;
 
 float screen_zoom = 1.0f, screen_center_x = 0.0f, screen_center_y = 0.0f, camera_center_x = 0.0f, camera_center_y = 0.0f;
 float camera_rotation_angle = 0.0f;
@@ -88,11 +96,18 @@ void draw() {
     {
         baloon[i].draw(VP);
     }
+    for (int i=0; i < freeze.size(); ++i)
+    {
+        freeze[i].draw(VP);
+    }
     firebeam.draw(VP);
     fireline.draw(VP);
     magnet.draw(VP);
     boomerang.draw(VP);
     speed.draw(VP);
+    life.draw(VP);
+    shield.draw(VP);
+    dragon.draw(VP);
 }
 
 void tick_input(GLFWwindow *window) {
@@ -116,8 +131,6 @@ void tick_input(GLFWwindow *window) {
     }
     if (up) {
         screen_zoom += 0.01f;
-        if (screen_zoom > 1.0f)
-            screen_center_y = ball.position.y;
     }
     if (down) {
         screen_zoom -= 0.01f;
@@ -133,18 +146,31 @@ void tick_elements() {
     firebeam.tick();
     boomerang.tick();
     speed.tick();
+    life.tick();
+    shield.tick();
+    dragon.tick();
 
     for(int i=0; i<baloon.size(); ++i)
     {
         baloon[i].tick();
+        if(baloon[i].position.x - ball.position.x >= 15)
+            baloon.erase(baloon.begin() + i);
+    }
+    for(int i=0; i<freeze.size(); ++i)
+    {
+        freeze[i].tick();
+        if(dragon.position.x - freeze[i].position.x >= 15)
+            freeze.erase(freeze.begin() + i);
+
+        
     }
 
     float r = sqrt((ball.position.x - magnet.position.x) * (ball.position.x - magnet.position.x) + (ball.position.y - magnet.position.y) * (ball.position.y - magnet.position.y));
 
-    if (r <= 100.0f and r >= 3.0f)
+    if (r <= 50.0f and r >= 3.0f)
     {
-        ball.position.x -= 4 * ((ball.position.x - magnet.position.x) / pow(r, 3));
-        ball.position.y -= 4 * ((ball.position.y - magnet.position.y) / pow(r, 3));
+        ball.position.x -= 8 * ((ball.position.x - magnet.position.x) / pow(r, 3));
+        ball.position.y -= 8 * ((ball.position.y - magnet.position.y) / pow(r, 3));
     }
     if(r < 3.0f)
     {
@@ -177,6 +203,9 @@ void initGL(GLFWwindow *window, int width, int height) {
     magnet = Magnet(camera_center_x + 50, 7, COLOR_RED);
     boomerang = Boomerang(camera_center_x + 10, 2, COLOR_BLACK);
     speed = Speed(camera_center_x + 1000, -5, COLOR_COIN_YELLOW);
+    life = Life(camera_center_x, 50, COLOR_LIFE);
+    shield = Shield(camera_center_x, 50, COLOR_SHIELD);
+    dragon = Dragon(camera_center_x + 50, 0, COLOR_EVIL);
 
     // Create and compile our GLSL program from the shaders
     programID = LoadShaders("Sample_GL.vert", "Sample_GL.frag");
@@ -245,18 +274,22 @@ int main(int argc, char **argv) {
                 boomerang = Boomerang(camera_center_x + 15, 2, COLOR_BLACK);
             }
 
-            if(tock % 600 == 0)
-            {
-                speed = Speed(camera_center_x + 20, -1, COLOR_COIN_YELLOW);
-            }
-
             if(HORIZONTAL_MOVEMENT_VALUE > 0.1f and tock - speed_time > 300.0)
             {
                 HORIZONTAL_MOVEMENT_VALUE = 0.1f;
             }
 
             if(tock % 60 == 0)
-                ++score;     
+                ++score;
+
+            if(ball.shield and tock - ball.shield_time > 300)
+                ball.shield = false;
+
+            if (tock - dragon.freeze_fire_time >= 60)
+            {
+                freeze.push_back(Freeze(dragon.position.x - 0.8, dragon.position.y, COLOR_FREEZE));
+                dragon.freeze_fire_time = tock;
+            }
 
             draw();
             // Swap Frame Buffer in double buffering
@@ -270,7 +303,6 @@ int main(int argc, char **argv) {
         // Poll for Keyboard and mouse events
         glfwPollEvents();
     }
-
     quit(window);
 }
 
@@ -280,6 +312,12 @@ bool detect_collision(bounding_box_t a, bounding_box_t b) {
 }
 
 void reset_screen() {
+
+    camera_center_y = 0;
+    if(screen_zoom > 1.5)
+    {
+        camera_center_y = ball.position.y;
+    }
     float top    = screen_center_y + 8 / screen_zoom;
     float bottom = screen_center_y - 8 / screen_zoom;
     float left   = screen_center_x - 8 / screen_zoom;
@@ -328,41 +366,50 @@ void check_collisions()
     //======================================================
 
     // Collission with firebeams
-    b_firebeam.x = firebeam.position.x;
-    b_firebeam.y = firebeam.position.y;
-    b_firebeam.height = 0.2;
-    b_firebeam.width = 8;
-
-    if (detect_collision(b_firebeam, b_ball))
+    if(!ball.shield)
     {
-        --lives;
-        ball = Ball(screen_center_x, -6, COLOR_BODY);
+        b_firebeam.x = firebeam.position.x;
+        b_firebeam.y = firebeam.position.y;
+        b_firebeam.height = 0.2;
+        b_firebeam.width = 8;
+
+        if (detect_collision(b_firebeam, b_ball))
+        {
+            --lives;
+            ball = Ball(screen_center_x, -6, COLOR_BODY);
+        }
     }
     //======================================================
 
     // Collission with firelines
-    b_fireline.x = fireline.position.x;
-    b_fireline.y = fireline.position.y;
-    b_fireline.width = 7.2 * cos(fireline.rotation / 180 * pi);
-    b_fireline.height = 7.2 * sin(fireline.rotation / 180 * pi);
-
-    if(detect_collision(b_ball, b_fireline) and detect_collision_fireline())
+    if(!ball.shield)
     {
-        --lives;
-        ball = Ball(screen_center_x, -6, COLOR_BODY);
+        b_fireline.x = fireline.position.x;
+        b_fireline.y = fireline.position.y;
+        b_fireline.width = 7.2 * cos(fireline.rotation / 180 * pi);
+        b_fireline.height = 7.2 * sin(fireline.rotation / 180 * pi);
+
+        if(detect_collision(b_ball, b_fireline) and detect_collision_fireline())
+        {
+            --lives;
+            ball = Ball(screen_center_x, -6, COLOR_BODY);
+        }
     }
     //======================================================
 
     // Collission with boomerang
-    b_boomerang.x = boomerang.position.x;
-    b_boomerang.y = boomerang.position.y;
-    b_boomerang.width = 1.4f;
-    b_boomerang.height = 1.4f;
-
-    if(detect_collision(b_ball, b_boomerang))
+    if (!ball.shield)
     {
-        --lives;
-        ball = Ball(screen_center_x, -6, COLOR_BODY);
+        b_boomerang.x = boomerang.position.x;
+        b_boomerang.y = boomerang.position.y;
+        b_boomerang.width = 1.4f;
+        b_boomerang.height = 1.4f;
+
+        if(detect_collision(b_ball, b_boomerang))
+        {
+            --lives;
+            ball = Ball(screen_center_x, -6, COLOR_BODY);
+        }
     }
     //======================================================
 
@@ -380,6 +427,33 @@ void check_collisions()
     }
     //======================================================
 
+    // Collission with life
+    b_life.x = life.position.x;
+    b_life.y = life.position.y;
+    b_life.width = 1.0f;
+    b_life.height = 1.0f;
+
+    if(detect_collision(b_ball, b_life))
+    {
+        life.position.y = 50;
+        ++lives;
+    }
+    //======================================================
+
+    // Collission with shield
+    b_shield.x = shield.position.x;
+    b_shield.y = shield.position.y;
+    b_shield.width = 2.0f;
+    b_shield.height = 2.0f;
+
+    if(detect_collision(b_ball, b_shield))
+    {
+        shield.position.y = 50;
+        ball.shield = true;
+        ball.shield_time = tock;
+    }
+    //======================================================
+
     // Collission of baloon with lazer
     for (int i=0; i < baloon.size(); ++i)
     {
@@ -394,6 +468,22 @@ void check_collisions()
         //     speed_time = tock;
         //     speed.position.y = 50;
         // }
+    }
+    //======================================================
+
+    // Collission of freeze with player
+    for (int i=0; i < freeze.size(); ++i)
+    {
+        b_freeze.x = freeze[i].position.x;
+        b_freeze.y = freeze[i].position.y;
+        b_freeze.width = 1.6f;
+        b_freeze.height = 1.6f;
+
+        if(!ball.shield and detect_collision(b_ball, b_freeze))
+        {
+            score -= 10;
+            freeze.erase(freeze.begin() + i);
+        }
     }
     //======================================================
 }
@@ -434,11 +524,28 @@ void generate_obstacles()
     else if ((int)(camera_center_x * 10) % 250 == 0 and camera_center_x != 0 and (int)camera_center_x != 25)
     {
         //make fire beam
-        firebeam = Firebeam(camera_center_x + 10, rand() % 7, COLOR_RED);
+        firebeam = Firebeam(camera_center_x + 8, rand() % 7, COLOR_RED);
     }
     else if ((int)(camera_center_x * 10) % 50 == 0 and camera_center_x != 0 and (int)camera_center_x != 25)
     {
-        coin.push_back(Coin(camera_center_x + 50, (rand() % 5) - 2, COLOR_COIN_YELLOW));
+        coin.push_back(Coin(camera_center_x + 10, (rand() % 5) - 2, COLOR_COIN_YELLOW));
     }
     // ------------------------------------------------------
+
+    if(tock % 600 == 0)
+    {
+        speed = Speed(camera_center_x + 10, (rand() % 5) - 2, COLOR_COIN_YELLOW);
+    }
+    if(tock % 800 == 0)
+    {
+        shield = Shield(camera_center_x + 15, (rand() % 5) - 2, COLOR_SHIELD);
+    }
+    if(tock % 1000 == 0)
+    {
+        life = Life(camera_center_x + 20, (rand() % 5) - 2, COLOR_LIFE);
+    }
+    if(tock % 2400 == 0)
+    {
+        dragon = Dragon(camera_center_x + 20, 0, COLOR_EVIL);
+    }
 }

@@ -1,17 +1,17 @@
 #include "main.h"
 
-#ifndef SPEED_H
-#define SPEED_H
+#ifndef SHIELD_H
+#define SHIELD_H
 #define GLM_ENABLE_EXPERIMENTAL
 
 
-class Speed {
+class Shield {
 public:
-    Speed() {}
-    Speed(float x, float y, color_t color);
+    Shield() {}
+    Shield(float x, float y, color_t color);
     glm::vec3 position;
     float rotation;
-    bool direction = false;
+    bool direction = true;
     void draw(glm::mat4 VP);
     void set_position(float x, float y);
     void tick();
@@ -19,4 +19,4 @@ private:
     VAO *object;
 };
 
-#endif // SPEED_H
+#endif // SHIELD_H
