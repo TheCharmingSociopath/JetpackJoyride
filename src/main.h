@@ -105,5 +105,6 @@ extern const color_t COLOR_JETPACK;
 extern const color_t COLOR_LEG;
 extern const color_t COLOR_HEAD;
 extern const color_t COLOR_SHIELD_FOTO;
+extern const color_t COLOR_WHITE;
 
 #endif

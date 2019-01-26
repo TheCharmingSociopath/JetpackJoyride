@@ -18,16 +18,6 @@ Platform::Platform(float x, float y, color_t color) {
         1.0f,2.0f,0.0f, // triangle 2 : end
     };
 
-    // static const GLfloat vertex_color_data[] = {
-    //     -1.0f,-1.0f, 0.0f, // triangle 1 : begin
-    //     -1.0f,2.0f, 0.0f,
-    //     1.0f, 2.0f, 0.0f, // triangle 1 : end
-
-    //     -1.0f,-1.0f,0.0f, // triangle 2 : begin
-    //     1.0f,-1.0f,0.0f,
-    //     1.0f,2.0f,0.0f, // triangle 2 : end
-    // };
-
     this->object = create3DObject(GL_TRIANGLES, 18, vertex_buffer_data, color, GL_FILL);
 }
 

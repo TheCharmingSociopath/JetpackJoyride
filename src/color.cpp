@@ -22,3 +22,4 @@ const color_t COLOR_FREEZE = { 5, 185, 171 };
 const color_t COLOR_LAZER_EDGE = { 33, 41, 29 };
 const color_t COLOR_LAZER = { 227, 142, 43 };
 const color_t COLOR_SHIELD_FOTO = { 227, 150, 50 };
+const color_t COLOR_WHITE = { 255, 255, 255 };

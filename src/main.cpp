@@ -38,7 +38,7 @@ Speed speed;
 Life life;
 Shield shield;
 Dragon dragon;
-Score p_score, p_life;
+Score p_score, p_life, p_coins;
 Ring ring;
 Shield_foto shield_foto;
 
@@ -121,8 +121,10 @@ void draw() {
     ball.draw(VP);
     p_score.set_position(camera_center_x + 7, camera_center_y + 7);
     p_score.print_score(score, VP);
-    p_life.set_position(camera_center_x - 7, camera_center_y + 7);
+    p_life.set_position(camera_center_x - 7, camera_center_y - 6);
     p_life.print_score(lives, VP);
+    p_coins.set_position(camera_center_x - 3, camera_center_y + 7);
+    p_coins.print_score(coins_collected, VP);
 }
 
 void tick_input(GLFWwindow *window) {
@@ -257,7 +259,8 @@ void initGL(GLFWwindow *window, int width, int height) {
     dragon = Dragon(camera_center_x + 50, 0, COLOR_EVIL);
     ring = Ring(camera_center_x + 70, -2);
     p_score = Score(7, 7, COLOR_BLACK);
-    p_life = Score(-7, 7, COLOR_BLACK);
+    p_life = Score(-7, -6, COLOR_WHITE);
+    p_coins = Score(-7, 7, COLOR_BLACK);
     shield_foto = Shield_foto(ball.position.x, ball.position.y);
 
     // Create and compile our GLSL program from the shaders
@@ -302,22 +305,18 @@ int main(int argc, char **argv) {
             // 60 fps
             // OpenGL Draw commands
 
-            check_collisions();
-
-            generate_obstacles();
-
-            if ((int)camera_center_x % 10 == 0)
-            {
-                cout << "Score: " << score << endl;
-                cout << "Lives: " << lives << endl;
-            }
             if (lives == 0)
             {
                 cout << "Game Over :(" << endl;
                 cout << "Score: " << score << endl;
-                cout << "Lives: " << lives << endl;
+                cout << "Coins Collected: " << coins_collected << endl;
                 return 0;
             }
+
+            check_collisions();
+
+            generate_obstacles();
+
             if(magnet.time >= 600)
             {
                 magnet = Magnet(camera_center_x + 10, 7, COLOR_RED);
