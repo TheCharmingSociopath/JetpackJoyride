@@ -37,7 +37,7 @@ Speed speed;
 Life life;
 Shield shield;
 Dragon dragon;
-Score p_score;
+Score p_score, p_life;
 Ring ring;
 
 bounding_box_t b_ball, b_coin, b_fireline, b_firebeam, b_boomerang, b_speed, b_baloon, b_life, b_shield, b_freeze, b_ring;
@@ -115,6 +115,8 @@ void draw() {
     ball.draw(VP);
     p_score.set_position(camera_center_x + 7, camera_center_y + 7);
     p_score.print_score(score, VP);
+    p_life.set_position(camera_center_x - 7, camera_center_y + 7);
+    p_life.print_score(lives, VP);
 }
 
 void tick_input(GLFWwindow *window) {
@@ -248,6 +250,7 @@ void initGL(GLFWwindow *window, int width, int height) {
     dragon = Dragon(camera_center_x + 50, 0, COLOR_EVIL);
     ring = Ring(camera_center_x + 70, -2);
     p_score = Score(7, 7, COLOR_BLACK);
+    p_life = Score(-7, 7, COLOR_BLACK);
 
     // Create and compile our GLSL program from the shaders
     programID = LoadShaders("Sample_GL.vert", "Sample_GL.frag");
@@ -369,14 +372,59 @@ void reset_screen() {
 bool detect_collision_fireline()
 {
     float a = tan(fireline.rotation / 180 * pi), x1 = ball.position.x + 1, x2 = ball.position.x - 1,
-    x3 = ball.position.x + 1, x4 = ball.position.x - 1, y1 = ball.position.x + 2, y2 = ball.position.x + 2,
-    y3 = ball.position.x - 1, y4 = ball.position.x - 1, b = -1,
+    x3 = ball.position.x + 1, x4 = ball.position.x - 1, y1 = ball.position.y + 2, y2 = ball.position.y + 2,
+    y3 = ball.position.y - 1, y4 = ball.position.y - 1, b = -1,
     c = fireline.position.y - (a * fireline.position.x);
 
-    if ( abs((a * x1 + b * y1 + c) / sqrt(a*a + b*b)) <= 10 or
-    abs((a * x2 + b * y2 + c) / sqrt(a*a + b*b)) <= 10 or
-    abs((a * x3 + b * y3 + c) / sqrt(a*a + b*b)) <= 10 or
-    abs((a * x4 + b * y4 + c) / sqrt(a*a + b*b)) <= 10)
+    if ( abs((a * x1 + b * y1 + c) / sqrt(a*a + b*b)) <= 0.5 or
+    abs((a * x2 + b * y2 + c) / sqrt(a*a + b*b)) <= 0.5 or
+    abs((a * x3 + b * y3 + c) / sqrt(a*a + b*b)) <= 0.5 or
+    abs((a * x4 + b * y4 + c) / sqrt(a*a + b*b)) <= 0.5 )
+        return true;
+
+    return false;
+}
+
+bool detect_collision_firebeam()
+{
+    float a = tan(fireline.rotation / 180 * pi), x1 = ball.position.x + 1, x2 = ball.position.x - 1,
+    x3 = ball.position.x + 1, x4 = ball.position.x - 1, y1 = ball.position.y + 2, y2 = ball.position.y + 2,
+    y3 = ball.position.y - 1, y4 = ball.position.y - 1, b = -1,
+    c = fireline.position.y - (a * fireline.position.x);
+
+    if ( abs((a * x1 + b * y1 + c) / sqrt(a*a + b*b)) <= 0.5 or
+    abs((a * x2 + b * y2 + c) / sqrt(a*a + b*b)) <= 0.5 or
+    abs((a * x3 + b * y3 + c) / sqrt(a*a + b*b)) <= 0.5 or
+    abs((a * x4 + b * y4 + c) / sqrt(a*a + b*b)) <= 0.5 )
+        return true;
+
+    return false;
+}
+
+bool detect_collision_baloon_fireline(Baloon bal)
+{
+    float a = 0, x1 = bal.position.x + 1, x2 = bal.position.x - 1,
+    x3 = bal.position.x + 1, x4 = bal.position.x - 1, y1 = bal.position.y + 2, y2 = bal.position.y + 2,
+    y3 = bal.position.y - 1, y4 = bal.position.y - 1, b = -1,
+    c = fireline.position.y - (a * fireline.position.x);
+
+    if ( abs((a * x1 + b * y1 + c) / sqrt(a*a + b*b)) <= 0.5 or
+    abs((a * x2 + b * y2 + c) / sqrt(a*a + b*b)) <= 0.5 or
+    abs((a * x3 + b * y3 + c) / sqrt(a*a + b*b)) <= 0.5 or
+    abs((a * x4 + b * y4 + c) / sqrt(a*a + b*b)) <= 0.5 )
+        return true;
+
+    return false;
+}
+
+bool detect_collision_baloon_firebeam(Baloon bal)
+{
+    float x1 = ball.position.x + 1, x2 = ball.position.x - 1,
+    x3 = ball.position.x + 1, x4 = ball.position.x - 1, y1 = ball.position.y + 2, y2 = ball.position.y + 2,
+    y3 = ball.position.y - 1, y4 = ball.position.y - 1, b = -1;
+
+    if ( bal.position.x <= firebeam.position.x + 4.6 and bal.position.x >= firebeam.position.x - 4.6
+    and bal.position.y <= firebeam.position.y + 0.3 and bal.position.y >= firebeam.position.y - 0.3)
         return true;
 
     return false;
@@ -411,13 +459,15 @@ void check_collisions()
     {
         b_firebeam.x = firebeam.position.x;
         b_firebeam.y = firebeam.position.y;
-        b_firebeam.height = 0.2;
-        b_firebeam.width = 8;
+        b_firebeam.height = 0.8;
+        b_firebeam.width = 9.2;
 
-        if (detect_collision(b_firebeam, b_ball))
+        if (detect_collision(b_firebeam, b_ball) and detect_collision_firebeam())
         {
-            --lives;
-            ball = Ball(screen_center_x, -6, COLOR_BODY);
+            --score;
+            if (score < 0) score = 0;
+            // ball = Ball(screen_center_x, -6, COLOR_BODY);
+            draw();
         }
     }
     //======================================================
@@ -432,8 +482,10 @@ void check_collisions()
 
         if(detect_collision(b_ball, b_fireline) and detect_collision_fireline())
         {
-            --lives;
-            ball = Ball(screen_center_x, -6, COLOR_BODY);
+            --score;
+            if (score < 0) score = 0;
+            // ball = Ball(screen_center_x, -6, COLOR_BODY);
+            draw();
         }
     }
     //======================================================
@@ -503,12 +555,16 @@ void check_collisions()
         b_baloon.width = 1.6f;
         b_baloon.height = 1.6f;
 
-        // if(detect_collision(b_ball, b_baloon))
-        // {
-        //     HORIZONTAL_MOVEMENT_VALUE += 0.1f;
-        //     speed_time = tock;
-        //     speed.position.y = 50;
-        // }
+        if(detect_collision_baloon_fireline(baloon[i]))
+        {
+            fireline.set_position(fireline.position.x, 60);
+            baloon.erase(baloon.begin() + i);
+        }
+        if(detect_collision_baloon_firebeam(baloon[i]))
+        {
+            firebeam.set_position(firebeam.position.x, 60);
+            baloon.erase(baloon.begin() + i);
+        }
     }
     //======================================================
 
