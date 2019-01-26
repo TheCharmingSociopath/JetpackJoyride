@@ -8,7 +8,7 @@
 class Shield_foto {
 public:
     Shield_foto() {}
-    Shield_foto(float x, float y);
+    Shield_foto(float x, float y, color_t color);
     glm::vec3 position;
     float rotation;
     int time;

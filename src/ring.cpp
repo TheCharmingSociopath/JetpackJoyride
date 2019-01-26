@@ -3,7 +3,7 @@
 
 #define GLM_ENABLE_EXPERIMENTAL
 
-Ring::Ring(float x, float y) {
+Ring::Ring(float x, float y, color_t color) {
     this->position = glm::vec3(x, y, 0);
     this->rotation = 0;
 
@@ -27,7 +27,7 @@ Ring::Ring(float x, float y) {
 		vertex_buffer_data1[i++] = 3 * sin(arg);
 		vertex_buffer_data1[i++] = 0.0f;
 	}
-    this->object[0] = create3DObject(GL_TRIANGLES, 1500, vertex_buffer_data1, COLOR_BACKGROUND, GL_FILL);
+    this->object[0] = create3DObject(GL_TRIANGLES, 1500, vertex_buffer_data1, color, GL_FILL);
 
     arg = 0.0f;
     for(int i=0; i<4500;)

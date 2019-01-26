@@ -54,6 +54,7 @@ float screen_zoom = 1.0f, screen_center_x = 0.0f, screen_center_y = 0.0f, camera
 float camera_rotation_angle = 0.0f;
 long long int score = 0, lives = 5, tock = 0, speed_time = 0, coins_collected = 0, last_baloon;
 float HORIZONTAL_MOVEMENT_VALUE = 0.1f;
+int loop = 0;
 
 Timer t60(1.0 / 60);
 
@@ -270,11 +271,11 @@ void initGL(GLFWwindow *window, int width, int height) {
     life = Life(camera_center_x, 50, COLOR_LIFE);
     shield = Shield(camera_center_x, 50, COLOR_SHIELD);
     dragon = Dragon(camera_center_x + 50, 0, COLOR_EVIL);
-    ring = Ring(camera_center_x + 70, -2);
+    ring = Ring(camera_center_x + 70, -2, COLOR_BACKGROUND[loop]);
     p_score = Score(7, 7, COLOR_BLACK);
     p_life = Score(-7, -6, COLOR_WHITE);
     p_coins = Score(-7, 7, COLOR_BLACK);
-    shield_foto = Shield_foto(ball.position.x, ball.position.y);
+    shield_foto = Shield_foto(ball.position.x, ball.position.y, COLOR_BACKGROUND[loop]);
 
     // Create and compile our GLSL program from the shaders
     programID = LoadShaders("Sample_GL.vert", "Sample_GL.frag");
@@ -284,7 +285,7 @@ void initGL(GLFWwindow *window, int width, int height) {
     reshapeWindow (window, width, height);
 
     // Background color of the scene
-    glClearColor (COLOR_BACKGROUND.r / 256.0, COLOR_BACKGROUND.g / 256.0, COLOR_BACKGROUND.b / 256.0, 0.0f); // R, G, B, A
+    glClearColor (COLOR_BACKGROUND[loop].r / 256.0, COLOR_BACKGROUND[loop].g / 256.0, COLOR_BACKGROUND[loop].b / 256.0, 0.0f); // R, G, B, A
     glClearDepth (1.0f);
 
     glEnable (GL_DEPTH_TEST);
@@ -315,6 +316,11 @@ int main(int argc, char **argv) {
 
         if (t60.processTick()) {
             ++tock;
+            if(tock % 300 == 0)
+            {
+                loop = (++loop) % 5;
+            }
+            glClearColor (COLOR_BACKGROUND[loop].r / 256.0, COLOR_BACKGROUND[loop].g / 256.0, COLOR_BACKGROUND[loop].b / 256.0, 0.0f);
             // 60 fps
             // OpenGL Draw commands
 
@@ -553,7 +559,7 @@ void check_collisions()
         shield.position.y = 50;
         ball.shield = true;
         ball.shield_time = tock;
-        shield_foto = Shield_foto(ball.position.x, ball.position.y);
+        shield_foto = Shield_foto(ball.position.x, ball.position.y, COLOR_BACKGROUND[loop]);
     }
     //======================================================
 

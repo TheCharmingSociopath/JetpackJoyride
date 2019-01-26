@@ -3,7 +3,7 @@
 
 #define GLM_ENABLE_EXPERIMENTAL
 
-Shield_foto::Shield_foto(float x, float y) {
+Shield_foto::Shield_foto(float x, float y, color_t color) {
     this->position = glm::vec3(x, y, 0);
     this->rotation = 0;
     this->time = 0;
@@ -48,7 +48,7 @@ Shield_foto::Shield_foto(float x, float y) {
 		vertex_buffer_data2[i++] = 1.3 * sin(arg);
 		vertex_buffer_data2[i++] = 0.0f;
 	}
-    this->object[1] = create3DObject(GL_TRIANGLES, 3000, vertex_buffer_data2, COLOR_BACKGROUND, GL_FILL);
+    this->object[1] = create3DObject(GL_TRIANGLES, 3000, vertex_buffer_data2, color, GL_FILL);
 }
 
 void Shield_foto::draw(glm::mat4 VP) {
