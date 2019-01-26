@@ -13,6 +13,8 @@
 #include "shield.h"
 #include "dragon.h"
 #include "freeze.h"
+#include "score.h"
+#include "ring.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
 
@@ -35,6 +37,8 @@ Speed speed;
 Life life;
 Shield shield;
 Dragon dragon;
+Score p_score;
+Ring ring;
 
 bounding_box_t b_ball, b_coin, b_fireline, b_firebeam, b_boomerang, b_speed, b_baloon, b_life, b_shield, b_freeze;
 vector <Platform> platform;
@@ -44,7 +48,7 @@ vector <Freeze> freeze;
 
 float screen_zoom = 1.0f, screen_center_x = 0.0f, screen_center_y = 0.0f, camera_center_x = 0.0f, camera_center_y = 0.0f;
 float camera_rotation_angle = 0.0f;
-int score = 0, lives = 5, tock = 0, speed_time = 0, coins_collected = 0, last_baloon;
+long long int score = 0, lives = 5, tock = 0, speed_time = 0, coins_collected = 0, last_baloon;
 float HORIZONTAL_MOVEMENT_VALUE = 0.1f;
 
 Timer t60(1.0 / 60);
@@ -108,6 +112,9 @@ void draw() {
     life.draw(VP);
     shield.draw(VP);
     dragon.draw(VP);
+    ring.draw(VP);
+    p_score.set_position(camera_center_x + 7, camera_center_y + 7);
+    p_score.print_score(score, VP);
 }
 
 void tick_input(GLFWwindow *window) {
@@ -161,8 +168,6 @@ void tick_elements() {
         freeze[i].tick();
         if(dragon.position.x - freeze[i].position.x >= 15)
             freeze.erase(freeze.begin() + i);
-
-        
     }
 
     float r = sqrt((ball.position.x - magnet.position.x) * (ball.position.x - magnet.position.x) + (ball.position.y - magnet.position.y) * (ball.position.y - magnet.position.y));
@@ -206,6 +211,8 @@ void initGL(GLFWwindow *window, int width, int height) {
     life = Life(camera_center_x, 50, COLOR_LIFE);
     shield = Shield(camera_center_x, 50, COLOR_SHIELD);
     dragon = Dragon(camera_center_x + 50, 0, COLOR_EVIL);
+    ring = Ring(camera_center_x + 25, 0);
+    p_score = Score(7, 7, COLOR_BLACK);
 
     // Create and compile our GLSL program from the shaders
     programID = LoadShaders("Sample_GL.vert", "Sample_GL.frag");

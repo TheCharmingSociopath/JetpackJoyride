@@ -43,10 +43,6 @@ void Platform::draw(glm::mat4 VP) {
     draw3DObject(this->object);
 }
 
-void Platform::set_position(float x, float y) {
-    this->position = glm::vec3(x, y, 0);
-}
-
 void Platform::tick() {
     // this->position.x += 0.1;
 }
