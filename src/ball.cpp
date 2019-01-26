@@ -43,16 +43,19 @@ void Ball::set_position(float x, float y) {
 
 void Ball::tick() {
     // this->rotation += speed;
-    if (this->position.y < 6 or this -> speed < 0)
-        this->position.y += this->speed;
-
-    if (this->position.y > -ground)
-        this->speed = this->speed - gravity * t;
-
-    if (this->position.y <= -ground)
+    if(!this->in_ring and !this->is_frozen)
     {
-        this->speed = 0;
-        this->position.y = -ground;
+        if (this->position.y < 6 or this -> speed < 0)
+            this->position.y += this->speed;
+
+        if (this->position.y > -ground)
+            this->speed = this->speed - gravity * t;
+
+        if (this->position.y <= -ground)
+        {
+            this->speed = 0;
+            this->position.y = -ground;
+        }
     }
 }
 

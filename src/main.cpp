@@ -40,7 +40,7 @@ Dragon dragon;
 Score p_score;
 Ring ring;
 
-bounding_box_t b_ball, b_coin, b_fireline, b_firebeam, b_boomerang, b_speed, b_baloon, b_life, b_shield, b_freeze;
+bounding_box_t b_ball, b_coin, b_fireline, b_firebeam, b_boomerang, b_speed, b_baloon, b_life, b_shield, b_freeze, b_ring;
 vector <Platform> platform;
 vector <Coin> coin;
 vector <Baloon> baloon;
@@ -87,7 +87,6 @@ void draw() {
     glm::mat4 MVP;  // MVP = Projection * View * Model
 
     // Scene render
-    ball.draw(VP);
     for (int i=0; i < platform.size(); ++i)
     {
         platform[i].draw(VP);
@@ -113,38 +112,70 @@ void draw() {
     shield.draw(VP);
     dragon.draw(VP);
     ring.draw(VP);
+    ball.draw(VP);
     p_score.set_position(camera_center_x + 7, camera_center_y + 7);
     p_score.print_score(score, VP);
 }
 
 void tick_input(GLFWwindow *window) {
-    int left  = glfwGetKey(window, GLFW_KEY_LEFT);
-    int right = glfwGetKey(window, GLFW_KEY_RIGHT);
-    int space = glfwGetKey(window, GLFW_KEY_SPACE);
-    int up = glfwGetKey(window, GLFW_KEY_UP);
-    int down = glfwGetKey(window, GLFW_KEY_DOWN);
-    int b = glfwGetKey(window, GLFW_KEY_B);
+    if (!ball.is_frozen and !ball.in_ring)
+    {
+        int left  = glfwGetKey(window, GLFW_KEY_LEFT);
+        int right = glfwGetKey(window, GLFW_KEY_RIGHT);
+        int space = glfwGetKey(window, GLFW_KEY_SPACE);
+        int up = glfwGetKey(window, GLFW_KEY_UP);
+        int down = glfwGetKey(window, GLFW_KEY_DOWN);
+        int b = glfwGetKey(window, GLFW_KEY_B);
 
-    if (left) {
-        camera_center_x -= HORIZONTAL_MOVEMENT_VALUE;
-        ball.position.x = camera_center_x;
+        if (left) {
+            camera_center_x -= HORIZONTAL_MOVEMENT_VALUE;
+            ball.position.x = camera_center_x;
+        }
+        if (right) {
+            camera_center_x += HORIZONTAL_MOVEMENT_VALUE;
+            ball.position.x = camera_center_x;
+        }
+        if (space) {
+            ball.speed = 0.1f;
+        }
+        if (up) {
+            screen_zoom += 0.01f;
+        }
+        if (down) {
+            screen_zoom -= 0.01f;
+        }
+        if (b and tock - last_baloon > 30) {
+            baloon.push_back(Baloon(ball.position.x + 0.8, ball.position.y, COLOR_BLUE));
+            last_baloon = tock;
+        }
     }
-    if (right) {
-        camera_center_x += HORIZONTAL_MOVEMENT_VALUE;
-        ball.position.x = camera_center_x;
-    }
-    if (space) {
-        ball.speed = 0.1f;
-    }
-    if (up) {
-        screen_zoom += 0.01f;
-    }
-    if (down) {
-        screen_zoom -= 0.01f;
-    }
-    if (b and tock - last_baloon > 30) {
-        baloon.push_back(Baloon(ball.position.x + 0.8, ball.position.y, COLOR_BLUE));
-        last_baloon = tock;
+    if (ball.in_ring)
+    {
+        int left  = glfwGetKey(window, GLFW_KEY_LEFT);
+        int right = glfwGetKey(window, GLFW_KEY_RIGHT);
+        int up = glfwGetKey(window, GLFW_KEY_UP);
+        int down = glfwGetKey(window, GLFW_KEY_DOWN);
+
+        if (left) {
+            ball.arg -= 0.05f;
+            if(ball.arg < pi) ball.arg = pi;
+            camera_center_x = ring.position.x + 5.0f * cos(ball.arg);
+            ball.position.x = camera_center_x;
+            ball.position.y = ring.position.y + 4.0f * sin(ball.arg);
+        }
+        if (right) {
+            ball.arg += 0.05f;
+            camera_center_x = ring.position.x + 5.0f * cos(ball.arg);
+            ball.position.x = camera_center_x;
+            ball.position.y = ring.position.y + 4.0f * sin(ball.arg);
+            cout << ball.arg << " " << ball.in_ring << endl;
+        }
+        if (up) {
+            screen_zoom += 0.01f;
+        }
+        if (down) {
+            screen_zoom -= 0.01f;
+        }
     }
 }
 
@@ -169,18 +200,22 @@ void tick_elements() {
         if(dragon.position.x - freeze[i].position.x >= 15)
             freeze.erase(freeze.begin() + i);
     }
-
-    float r = sqrt((ball.position.x - magnet.position.x) * (ball.position.x - magnet.position.x) + (ball.position.y - magnet.position.y) * (ball.position.y - magnet.position.y));
-
-    if (r <= 50.0f and r >= 3.0f)
+    if(!ball.is_frozen and !ball.in_ring)
     {
-        ball.position.x -= 8 * ((ball.position.x - magnet.position.x) / pow(r, 3));
-        ball.position.y -= 8 * ((ball.position.y - magnet.position.y) / pow(r, 3));
+        float r = sqrt((ball.position.x - magnet.position.x) * (ball.position.x - magnet.position.x) + (ball.position.y - magnet.position.y) * (ball.position.y - magnet.position.y));
+
+        if (r <= 50.0f and r >= 3.0f)
+        {
+            ball.position.x -= 8 * ((ball.position.x - magnet.position.x) / pow(r, 3));
+            ball.position.y -= 8 * ((ball.position.y - magnet.position.y) / pow(r, 3));
+        }
+        if(r < 3.0f)
+        {
+            ball.position.y = magnet.position.y - 1.0f;
+        }
     }
-    if(r < 3.0f)
-    {
-        ball.position.y = magnet.position.y - 1.0f;
-    }
+    if (ball.is_frozen and tock - ball.freeze_time > 300)
+        ball.is_frozen = false;
 
     camera_rotation_angle += 1;
 }
@@ -211,7 +246,7 @@ void initGL(GLFWwindow *window, int width, int height) {
     life = Life(camera_center_x, 50, COLOR_LIFE);
     shield = Shield(camera_center_x, 50, COLOR_SHIELD);
     dragon = Dragon(camera_center_x + 50, 0, COLOR_EVIL);
-    ring = Ring(camera_center_x + 25, 0);
+    ring = Ring(camera_center_x + 70, -2);
     p_score = Score(7, 7, COLOR_BLACK);
 
     // Create and compile our GLSL program from the shaders
@@ -292,7 +327,7 @@ int main(int argc, char **argv) {
             if(ball.shield and tock - ball.shield_time > 300)
                 ball.shield = false;
 
-            if (tock - dragon.freeze_fire_time >= 60)
+            if (!ball.is_frozen and tock - dragon.freeze_fire_time >= 60)
             {
                 freeze.push_back(Freeze(dragon.position.x - 0.8, dragon.position.y, COLOR_FREEZE));
                 dragon.freeze_fire_time = tock;
@@ -306,7 +341,6 @@ int main(int argc, char **argv) {
             tick_input(window);
             reset_screen();
         }
-
         // Poll for Keyboard and mouse events
         glfwPollEvents();
     }
@@ -488,9 +522,38 @@ void check_collisions()
 
         if(!ball.shield and detect_collision(b_ball, b_freeze))
         {
-            score -= 10;
+            ball.freeze_time = tock;
+            ball.is_frozen = true;
             freeze.erase(freeze.begin() + i);
         }
+    }
+    //======================================================
+
+    // Collission of ring with player in beginning 
+    b_ring.x = ring.position.x - 5;
+    b_ring.y = ring.position.y;
+    b_ring.width = 2.0f;
+    b_ring.height = 2.0f;
+
+    if(!ball.in_ring and detect_collision(b_ball, b_ring))
+    {
+        ball.arg = pi + 0.1f;
+        ball.shield = true;
+        ball.in_ring = true;
+    }
+    //======================================================
+
+    // Collission of ring with player at end
+    b_ring.x = ring.position.x + 5;
+    b_ring.y = ring.position.y;
+    b_ring.width = 2.0f;
+    b_ring.height = 2.0f;
+
+    if(ball.in_ring and detect_collision(b_ball, b_ring))
+    {
+        ball.arg = 0;
+        ball.shield = false;
+        ball.in_ring = false;
     }
     //======================================================
 }

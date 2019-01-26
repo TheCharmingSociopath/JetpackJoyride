@@ -17,13 +17,13 @@ Ring::Ring(float x, float y) {
 		vertex_buffer_data1[i++] = 0.0f;
 		vertex_buffer_data1[i++] = 0.0f;
 
-		vertex_buffer_data1[i++] = 3 * cos(arg);
+		vertex_buffer_data1[i++] = 4 * cos(arg);
 		vertex_buffer_data1[i++] = 3 * sin(arg);
 		vertex_buffer_data1[i++] = 0.0f;
 
-		arg += (2 * pi) / (double) 1000;
+		arg -= (2 * pi) / (double) 1000;
 
-		vertex_buffer_data1[i++] = 3 * cos(arg);
+		vertex_buffer_data1[i++] = 4 * cos(arg);
 		vertex_buffer_data1[i++] = 3 * sin(arg);
 		vertex_buffer_data1[i++] = 0.0f;
 	}
@@ -36,13 +36,13 @@ Ring::Ring(float x, float y) {
 		vertex_buffer_data2[i++] = 0.0f;
 		vertex_buffer_data2[i++] = 0.0f;
 
-		vertex_buffer_data2[i++] = 5 * cos(arg);
+		vertex_buffer_data2[i++] = 6 * cos(arg);
 		vertex_buffer_data2[i++] = 5 * sin(arg);
 		vertex_buffer_data2[i++] = 0.0f;
 
-		arg += (2 * pi) / (double) 1000;
+		arg -= (2 * pi) / (double) 1000;
 
-		vertex_buffer_data2[i++] = 5 * cos(arg);
+		vertex_buffer_data2[i++] = 6 * cos(arg);
 		vertex_buffer_data2[i++] = 5 * sin(arg);
 		vertex_buffer_data2[i++] = 0.0f;
 	}
@@ -58,8 +58,8 @@ void Ring::draw(glm::mat4 VP) {
     Matrices.model *= (translate * rotate);
     glm::mat4 MVP = VP * Matrices.model;
     glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-    draw3DObject(this->object[0]);
     draw3DObject(this->object[1]);
+    draw3DObject(this->object[0]);
 }
 
 void Ring::set_position(float x, float y) {
