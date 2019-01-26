@@ -10,40 +10,35 @@ Firebeam::Firebeam(float x, float y, color_t color) {
     // Our vertices. Three consecutive floats give a 3D vertex; Three consecutive vertices give a triangle.
     // A cube has 6 faces with 2 triangles each, so this makes 6*2=12 triangles, and 12*3 vertices
     static const GLfloat vertex_buffer_data[] = {
-        -4.0f,-0.8f, 0.0f, // triangle 1 : begin
-        -4.0f,-1.0f, 0.0f,
-        4.0f, -1.0f, 0.0f, // triangle 1 : end
+        5.0f, 0.2f, 0.0f, // triangle 1 : begin
+        5.0f, -0.2f, 0.0f,
+        -5.0f, 0.2f, 0.0f, // triangle 1 : end
 
-        4.0f,-1.0f,0.0f, // triangle 2 : begin
-        -4.0f,-0.8f,0.0f,
-        4.0f,-0.8f,0.0f, // triangle 2 : end
+        5.0f,-0.2f,0.0f, // triangle 2 : begin
+        -5.0f,0.2f,0.0f,
+        -5.0f,-0.2f,0.0f, // triangle 2 : end
+    };
+    static const GLfloat vertex_buffer_data1[] = {
+        5.0f, 0.3f, 0.0f,
+        5.5f, 0.3f, 0.0f,
+        5.5f, -0.3f, 0.0f,
 
-        -3.8f, -0.9f, 0.0f,
-        -4.2f, -0.6f, 0.0f,
-        -4.6f, -0.9f, 0.0f,
-        -4.6f, -0.9f, 0.0f,
-        -4.2f, -1.2f, 0.0f,
-        -3.8f, -0.9f, 0.0f,
+        5.0f, 0.3f, 0.0f,
+        5.5f, -0.3f, 0.0f,
+        5.0f, -0.3f, 0.0f,
 
-        3.8f, -0.9f, 0.0f,
-        4.2f, -0.6f, 0.0f,
-        4.6f, -0.9f, 0.0f,
-        4.6f, -0.9f, 0.0f,
-        4.2f, -1.2f, 0.0f,
-        3.8f, -0.9f, 0.0f,
+        -5.0f, 0.3f, 0.0f,
+        -5.5f, 0.3f, 0.0f,
+        -5.5f, -0.3f, 0.0f,
+
+        -5.0f, 0.3f, 0.0f,
+        -5.5f, -0.3f, 0.0f,
+        -5.0f, -0.3f, 0.0f,
     };
 
-    // static const GLfloat vertex_color_data[] = {
-    //     -1.0f,-1.0f, 0.0f, // triangle 1 : begin
-    //     -1.0f,2.0f, 0.0f,
-    //     1.0f, 2.0f, 0.0f, // triangle 1 : end
+    this->object[0] = create3DObject(GL_TRIANGLES, 6, vertex_buffer_data, COLOR_LAZER, GL_FILL);
+    this->object[1] = create3DObject(GL_TRIANGLES, 12, vertex_buffer_data1, COLOR_LAZER_EDGE, GL_FILL);
 
-    //     -1.0f,-1.0f,0.0f, // triangle 2 : begin
-    //     1.0f,-1.0f,0.0f,
-    //     1.0f,2.0f,0.0f, // triangle 2 : end
-    // };
-
-    this->object = create3DObject(GL_TRIANGLES, 54, vertex_buffer_data, color, GL_FILL);
 }
 
 void Firebeam::draw(glm::mat4 VP) {
@@ -55,7 +50,8 @@ void Firebeam::draw(glm::mat4 VP) {
     Matrices.model *= (translate * rotate);
     glm::mat4 MVP = VP * Matrices.model;
     glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-    draw3DObject(this->object);
+    draw3DObject(this->object[0]);
+    draw3DObject(this->object[1]);
 }
 
 void Firebeam::set_position(float x, float y) {

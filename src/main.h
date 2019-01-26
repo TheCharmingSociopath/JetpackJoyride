@@ -99,5 +99,7 @@ extern const color_t COLOR_LIFE;
 extern const color_t COLOR_SHIELD;
 extern const color_t COLOR_EVIL;
 extern const color_t COLOR_FREEZE;
+extern const color_t COLOR_LAZER_EDGE;
+extern const color_t COLOR_LAZER;
 
 #endif

@@ -136,6 +136,7 @@ void tick_input(GLFWwindow *window) {
         if (right) {
             camera_center_x += HORIZONTAL_MOVEMENT_VALUE;
             ball.position.x = camera_center_x;
+            if (tock % 10 == 0) ++score;
         }
         if (space) {
             ball.speed = 0.1f;
@@ -170,7 +171,7 @@ void tick_input(GLFWwindow *window) {
             camera_center_x = ring.position.x + 5.0f * cos(ball.arg);
             ball.position.x = camera_center_x;
             ball.position.y = ring.position.y + 4.0f * sin(ball.arg);
-            cout << ball.arg << " " << ball.in_ring << endl;
+            if (tock % 10 == 0) ++score;
         }
         if (up) {
             screen_zoom += 0.01f;
@@ -241,7 +242,7 @@ void initGL(GLFWwindow *window, int width, int height) {
     }
 
     firebeam = Firebeam(camera_center_x + 30, 1, COLOR_RED);
-    fireline = Fireline(camera_center_x + 40, 1, COLOR_RED, rand() % 90);
+    fireline = Fireline(camera_center_x + 60, 1, COLOR_RED, rand() % 90);
     magnet = Magnet(camera_center_x + 50, 7, COLOR_RED);
     boomerang = Boomerang(camera_center_x + 10, 2, COLOR_BLACK);
     speed = Speed(camera_center_x + 1000, -5, COLOR_COIN_YELLOW);
@@ -324,9 +325,6 @@ int main(int argc, char **argv) {
                 HORIZONTAL_MOVEMENT_VALUE = 0.1f;
             }
 
-            if(tock % 60 == 0)
-                ++score;
-
             if(ball.shield and tock - ball.shield_time > 300)
                 ball.shield = false;
 
@@ -385,26 +383,10 @@ bool detect_collision_fireline()
     return false;
 }
 
-bool detect_collision_firebeam()
-{
-    float a = tan(fireline.rotation / 180 * pi), x1 = ball.position.x + 1, x2 = ball.position.x - 1,
-    x3 = ball.position.x + 1, x4 = ball.position.x - 1, y1 = ball.position.y + 2, y2 = ball.position.y + 2,
-    y3 = ball.position.y - 1, y4 = ball.position.y - 1, b = -1,
-    c = fireline.position.y - (a * fireline.position.x);
-
-    if ( abs((a * x1 + b * y1 + c) / sqrt(a*a + b*b)) <= 0.5 or
-    abs((a * x2 + b * y2 + c) / sqrt(a*a + b*b)) <= 0.5 or
-    abs((a * x3 + b * y3 + c) / sqrt(a*a + b*b)) <= 0.5 or
-    abs((a * x4 + b * y4 + c) / sqrt(a*a + b*b)) <= 0.5 )
-        return true;
-
-    return false;
-}
-
 bool detect_collision_baloon_fireline(Baloon bal)
 {
-    float a = 0, x1 = bal.position.x + 1, x2 = bal.position.x - 1,
-    x3 = bal.position.x + 1, x4 = bal.position.x - 1, y1 = bal.position.y + 2, y2 = bal.position.y + 2,
+    float a = tan(fireline.rotation / 180 * pi), x1 = bal.position.x + 1, x2 = bal.position.x - 1,
+    x3 = bal.position.x + 1, x4 = bal.position.x - 1, y1 = bal.position.y + 1, y2 = bal.position.y + 1,
     y3 = bal.position.y - 1, y4 = bal.position.y - 1, b = -1,
     c = fireline.position.y - (a * fireline.position.x);
 
@@ -419,12 +401,12 @@ bool detect_collision_baloon_fireline(Baloon bal)
 
 bool detect_collision_baloon_firebeam(Baloon bal)
 {
-    float x1 = ball.position.x + 1, x2 = ball.position.x - 1,
-    x3 = ball.position.x + 1, x4 = ball.position.x - 1, y1 = ball.position.y + 2, y2 = ball.position.y + 2,
-    y3 = ball.position.y - 1, y4 = ball.position.y - 1, b = -1;
+    float x1 = bal.position.x + 1, x2 = bal.position.x - 1,
+    x3 = bal.position.x + 1, x4 = bal.position.x - 1, y1 = bal.position.y + 1, y2 = bal.position.y + 1,
+    y3 = bal.position.y - 1, y4 = bal.position.y - 1, b = -1;
 
-    if ( bal.position.x <= firebeam.position.x + 4.6 and bal.position.x >= firebeam.position.x - 4.6
-    and bal.position.y <= firebeam.position.y + 0.3 and bal.position.y >= firebeam.position.y - 0.3)
+    if ( bal.position.x <= firebeam.position.x + 5.0f and bal.position.x >= firebeam.position.x - 5.0f
+    and bal.position.y <= firebeam.position.y + 0.2f and bal.position.y >= firebeam.position.y - 0.2f)
         return true;
 
     return false;
@@ -459,10 +441,10 @@ void check_collisions()
     {
         b_firebeam.x = firebeam.position.x;
         b_firebeam.y = firebeam.position.y;
-        b_firebeam.height = 0.8;
-        b_firebeam.width = 9.2;
+        b_firebeam.height = 0.6;
+        b_firebeam.width = 10;
 
-        if (detect_collision(b_firebeam, b_ball) and detect_collision_firebeam())
+        if (detect_collision(b_firebeam, b_ball))
         {
             --score;
             if (score < 0) score = 0;
@@ -477,8 +459,8 @@ void check_collisions()
     {
         b_fireline.x = fireline.position.x;
         b_fireline.y = fireline.position.y;
-        b_fireline.width = 7.2 * cos(fireline.rotation / 180 * pi);
-        b_fireline.height = 7.2 * sin(fireline.rotation / 180 * pi);
+        b_fireline.width = 6 * cos(fireline.rotation / 180 * pi);
+        b_fireline.height = 6 * sin(fireline.rotation / 180 * pi);
 
         if(detect_collision(b_ball, b_fireline) and detect_collision_fireline())
         {

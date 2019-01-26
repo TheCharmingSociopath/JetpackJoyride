@@ -12,17 +12,49 @@ Ball::Ball(float x, float y, color_t color) {
     speed = 0;
     // Our vertices. Three consecutive floats give a 3D vertex; Three consecutive vertices give a triangle.
     // A cube has 6 faces with 2 triangles each, so this makes 6*2=12 triangles, and 12*3 vertices
-    static const GLfloat vertex_buffer_data[] = {
-        -1.0f,-1.0f, 0.0f, // triangle 1 : begin
-        -1.0f,2.0f, 0.0f,
-        1.0f, 2.0f, 0.0f, // triangle 1 : end
+    // static const GLfloat vertex_buffer_data[] = {
+    //     -1.0f,-1.0f, 0.0f, // triangle 1 : begin
+    //     -1.0f,2.0f, 0.0f,
+    //     1.0f, 2.0f, 0.0f, // triangle 1 : end
 
-        -1.0f,-1.0f,0.0f, // triangle 2 : begin
-        1.0f,-1.0f,0.0f,
-        1.0f,2.0f,0.0f, // triangle 2 : end
+    //     -1.0f,-1.0f,0.0f, // triangle 2 : begin
+    //     1.0f,-1.0f,0.0f,
+    //     1.0f,2.0f,0.0f, // triangle 2 : end
+
+
+    // };
+    static const GLfloat vertex_buffer_data1[] = {
+        1.0f, 1.0f, 0.0f,
+        1.0f, -1.0f, 0.0f,
+        -1.0f, -1.0f, 0.0f,
+
+        1.0f, 1.0f, 0.0f,
+        -1.0f, -1.0f, 0.0f,
+        -1.0f, 1.0f, 0.0f,
     };
+    this->object[0] = create3DObject(GL_TRIANGLES, 6, vertex_buffer_data1, COLOR_BODY, GL_FILL);
 
-    this->object = create3DObject(GL_TRIANGLES, 6, vertex_buffer_data, color, GL_FILL);
+    static const GLfloat vertex_buffer_data2[] = {
+        -1.0f, 0.6f, 0.0f,
+        -0.4f, 0.6f, 0.0f,
+        -1.0f, -0.6f, 0.0f,
+
+        -0.4f, 0.6f, 0.0f,
+        -1.0f, -0.6f, 0.0f,
+        -0.4f, -0.6f, 0.0f,
+    };
+    this->object[1] = create3DObject(GL_TRIANGLES, 6, vertex_buffer_data2, COLOR_JETPACK, GL_FILL);
+
+    static const GLfloat vertex_buffer_data3[] = {
+        0.8f, 1.4f, 0.0f,
+        0.6f, 1.0f, 0.0f,
+        -0.6f, 1.0f, 0.0f,
+
+        0.8f, 1.4f, 0.0f,
+        -0.8f, 1.4f, 0.0f,
+        -0.6f, 1.0f, 0.0f,
+    };
+    this->object[1] = create3DObject(GL_TRIANGLES, 6, vertex_buffer_data3, COLOR_JETPACK, GL_FILL);
 }
 
 void Ball::draw(glm::mat4 VP) {

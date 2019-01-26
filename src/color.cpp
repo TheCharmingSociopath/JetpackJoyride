@@ -14,3 +14,5 @@ const color_t COLOR_LIFE = { 0, 167, 73 };
 const color_t COLOR_SHIELD = { 117, 185, 171 };
 const color_t COLOR_EVIL = { 251, 185, 171 };
 const color_t COLOR_FREEZE = { 5, 185, 171 };
+const color_t COLOR_LAZER_EDGE = { 33, 41, 29 };
+const color_t COLOR_LAZER = { 227, 142, 43 };

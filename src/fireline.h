@@ -16,7 +16,7 @@ public:
     void tick();
     bool direction;
 private:
-    VAO *object;
+    VAO *object[2];
 };
 
 #endif // FIRELINE_H
