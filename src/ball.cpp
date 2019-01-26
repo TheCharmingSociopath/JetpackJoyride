@@ -24,37 +24,59 @@ Ball::Ball(float x, float y, color_t color) {
 
     // };
     static const GLfloat vertex_buffer_data1[] = {
-        1.0f, 1.0f, 0.0f,
-        1.0f, -1.0f, 0.0f,
-        -1.0f, -1.0f, 0.0f,
+        0.8f, 0.8f, 0.0f,
+        0.8f, -0.8f, 0.0f,
+        -0.4f, -0.8f, 0.0f,
 
-        1.0f, 1.0f, 0.0f,
-        -1.0f, -1.0f, 0.0f,
-        -1.0f, 1.0f, 0.0f,
+        0.8f, 0.8f, 0.0f,
+        -0.4f, -0.8f, 0.0f,
+        -0.4f, 0.8f, 0.0f,
     };
     this->object[0] = create3DObject(GL_TRIANGLES, 6, vertex_buffer_data1, COLOR_BODY, GL_FILL);
 
     static const GLfloat vertex_buffer_data2[] = {
-        -1.0f, 0.6f, 0.0f,
-        -0.4f, 0.6f, 0.0f,
-        -1.0f, -0.6f, 0.0f,
+        -0.8f, 0.4f, 0.0f,
+        -0.2f, 0.4f, 0.0f,
+        -0.8f, -0.4f, 0.0f,
 
-        -0.4f, 0.6f, 0.0f,
-        -1.0f, -0.6f, 0.0f,
-        -0.4f, -0.6f, 0.0f,
+        -0.2f, 0.4f, 0.0f,
+        -0.8f, -0.4f, 0.0f,
+        -0.6f, -0.4f, 0.0f,
     };
     this->object[1] = create3DObject(GL_TRIANGLES, 6, vertex_buffer_data2, COLOR_JETPACK, GL_FILL);
 
     static const GLfloat vertex_buffer_data3[] = {
-        0.8f, 1.4f, 0.0f,
-        0.6f, 1.0f, 0.0f,
-        -0.6f, 1.0f, 0.0f,
+        -0.4f, 1.2f, 0.0f,
+        0.2f, 0.8f, 0.0f,
+        0.6f, 0.8f, 0.0f,
 
-        0.8f, 1.4f, 0.0f,
-        -0.8f, 1.4f, 0.0f,
-        -0.6f, 1.0f, 0.0f,
+        -0.4f, 1.2f, 0.0f,
+        0.8f, 1.2f, 0.0f,
+        0.6f, 0.8f, 0.0f,
     };
-    this->object[1] = create3DObject(GL_TRIANGLES, 6, vertex_buffer_data3, COLOR_JETPACK, GL_FILL);
+    this->object[2] = create3DObject(GL_TRIANGLES, 6, vertex_buffer_data3, COLOR_HEAD, GL_FILL);
+
+    static const GLfloat vertex_buffer_data4[] = {
+        0.6f, -0.8f, 0.0f,
+        0.6f, -1.2f, 0.0f,
+        0.4f, -1.2f, 0.0f,
+
+        0.4f, -1.2f, 0.0f,
+        0.4f, -0.8f, 0.0f,
+        0.6f, -0.8f, 0.0f,
+    };
+    this->object[3] = create3DObject(GL_TRIANGLES, 6, vertex_buffer_data4, COLOR_LEG, GL_FILL);
+
+    static const GLfloat vertex_buffer_data5[] = {
+        -0.2f, -0.8f, 0.0f,
+        -0.2f, -1.2f, 0.0f,
+        0.0f, -1.2f, 0.0f,
+
+        0.0f, -1.2f, 0.0f,
+        0.0f, -0.8f, 0.0f,
+        -0.2f, -0.8f, 0.0f,
+    };
+    this->object[4] = create3DObject(GL_TRIANGLES, 6, vertex_buffer_data5, COLOR_LEG, GL_FILL);
 }
 
 void Ball::draw(glm::mat4 VP) {
@@ -66,7 +88,11 @@ void Ball::draw(glm::mat4 VP) {
     Matrices.model *= (translate * rotate);
     glm::mat4 MVP = VP * Matrices.model;
     glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-    draw3DObject(this->object);
+    draw3DObject(this->object[0]);
+    draw3DObject(this->object[1]);
+    draw3DObject(this->object[2]);
+    draw3DObject(this->object[3]);
+    draw3DObject(this->object[4]);
 }
 
 void Ball::set_position(float x, float y) {

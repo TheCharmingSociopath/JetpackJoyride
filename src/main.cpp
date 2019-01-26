@@ -15,6 +15,7 @@
 #include "freeze.h"
 #include "score.h"
 #include "ring.h"
+#include "shield_foto.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
 
@@ -39,6 +40,7 @@ Shield shield;
 Dragon dragon;
 Score p_score, p_life;
 Ring ring;
+Shield_foto shield_foto;
 
 bounding_box_t b_ball, b_coin, b_fireline, b_firebeam, b_boomerang, b_speed, b_baloon, b_life, b_shield, b_freeze, b_ring;
 vector <Platform> platform;
@@ -87,6 +89,10 @@ void draw() {
     glm::mat4 MVP;  // MVP = Projection * View * Model
 
     // Scene render
+    if (ball.shield)
+    {
+        shield_foto.draw(VP);
+    }
     for (int i=0; i < platform.size(); ++i)
     {
         platform[i].draw(VP);
@@ -252,6 +258,7 @@ void initGL(GLFWwindow *window, int width, int height) {
     ring = Ring(camera_center_x + 70, -2);
     p_score = Score(7, 7, COLOR_BLACK);
     p_life = Score(-7, 7, COLOR_BLACK);
+    shield_foto = Shield_foto(ball.position.x, ball.position.y);
 
     // Create and compile our GLSL program from the shaders
     programID = LoadShaders("Sample_GL.vert", "Sample_GL.frag");
@@ -287,8 +294,8 @@ int main(int argc, char **argv) {
         // Process timers
         b_ball.x = ball.position.x;
         b_ball.y = ball.position.y;
-        b_ball.width = 2;
-        b_ball.height = 3;
+        b_ball.width = 1.6;
+        b_ball.height = 2.4;
 
         if (t60.processTick()) {
             ++tock;
@@ -326,7 +333,15 @@ int main(int argc, char **argv) {
             }
 
             if(ball.shield and tock - ball.shield_time > 300)
+            {
                 ball.shield = false;
+                shield_foto.set_position(0, 100);
+            }
+
+            if (ball.shield)
+            {
+                shield_foto.set_position(ball.position.x, ball.position.y);
+            }
 
             if (!ball.is_frozen and tock - dragon.freeze_fire_time >= 60)
             {
@@ -369,9 +384,9 @@ void reset_screen() {
 
 bool detect_collision_fireline()
 {
-    float a = tan(fireline.rotation / 180 * pi), x1 = ball.position.x + 1, x2 = ball.position.x - 1,
-    x3 = ball.position.x + 1, x4 = ball.position.x - 1, y1 = ball.position.y + 2, y2 = ball.position.y + 2,
-    y3 = ball.position.y - 1, y4 = ball.position.y - 1, b = -1,
+    float a = tan(fireline.rotation / 180 * pi), x1 = ball.position.x + 0.8, x2 = ball.position.x - 0.8,
+    x3 = ball.position.x + 0.8, x4 = ball.position.x - 0.8, y1 = ball.position.y + 1.2, y2 = ball.position.y + 1.2,
+    y3 = ball.position.y - 1.2, y4 = ball.position.y - 1, b = -1.2,
     c = fireline.position.y - (a * fireline.position.x);
 
     if ( abs((a * x1 + b * y1 + c) / sqrt(a*a + b*b)) <= 0.5 or
@@ -526,6 +541,7 @@ void check_collisions()
         shield.position.y = 50;
         ball.shield = true;
         ball.shield_time = tock;
+        shield_foto = Shield_foto(ball.position.x, ball.position.y);
     }
     //======================================================
 

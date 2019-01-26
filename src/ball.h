@@ -19,7 +19,7 @@ public:
     void tick();
     double speed;
 private:
-    VAO *object[4];
+    VAO *object[5];
 };
 
 #endif // BALL_H

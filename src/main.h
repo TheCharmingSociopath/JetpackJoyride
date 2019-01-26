@@ -101,5 +101,9 @@ extern const color_t COLOR_EVIL;
 extern const color_t COLOR_FREEZE;
 extern const color_t COLOR_LAZER_EDGE;
 extern const color_t COLOR_LAZER;
+extern const color_t COLOR_JETPACK;
+extern const color_t COLOR_LEG;
+extern const color_t COLOR_HEAD;
+extern const color_t COLOR_SHIELD_FOTO;
 
 #endif
