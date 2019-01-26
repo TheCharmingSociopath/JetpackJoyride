@@ -3,6 +3,8 @@
 
 const color_t COLOR_RED = { 255, 0, 0 };
 const color_t COLOR_PLATFORM = { 41, 100, 145 };
+const color_t COLOR_PLATFORM2 = { 50, 120, 140 };
+
 const color_t COLOR_BLACK = { 52, 73, 94 };
 const color_t COLOR_BACKGROUND = { 255, 255, 255 };
 

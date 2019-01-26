@@ -90,6 +90,7 @@ extern const color_t COLOR_BODY;
 extern const color_t COLOR_BLACK;
 extern const color_t COLOR_BACKGROUND;
 extern const color_t COLOR_PLATFORM;
+extern const color_t COLOR_PLATFORM2;
 extern const color_t COLOR_COIN_YELLOW;
 extern const color_t COLOR_COIN_RED;
 extern const color_t COLOR_COIN_GREEN;

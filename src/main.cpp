@@ -16,6 +16,7 @@
 #include "score.h"
 #include "ring.h"
 #include "shield_foto.h"
+#include "propulsion.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
 
@@ -47,6 +48,7 @@ vector <Platform> platform;
 vector <Coin> coin;
 vector <Baloon> baloon;
 vector <Freeze> freeze;
+vector <Propulsion> propulsion;
 
 float screen_zoom = 1.0f, screen_center_x = 0.0f, screen_center_y = 0.0f, camera_center_x = 0.0f, camera_center_y = 0.0f;
 float camera_rotation_angle = 0.0f;
@@ -109,6 +111,10 @@ void draw() {
     {
         freeze[i].draw(VP);
     }
+    for (int i=0; i < propulsion.size(); ++i)
+    {
+        propulsion[i].draw(VP);
+    }
     firebeam.draw(VP);
     fireline.draw(VP);
     magnet.draw(VP);
@@ -148,6 +154,7 @@ void tick_input(GLFWwindow *window) {
         }
         if (space) {
             ball.speed = 0.1f;
+            propulsion.push_back(Propulsion(ball.position.x - 0.7, ball.position.y - 0.6));
         }
         if (up) {
             screen_zoom += 0.01f;
@@ -205,6 +212,12 @@ void tick_elements() {
         if(baloon[i].position.x - ball.position.x >= 15)
             baloon.erase(baloon.begin() + i);
     }
+    for(int i=0; i<propulsion.size(); ++i)
+    {
+        propulsion[i].tick();
+        if(propulsion[i].tim > 120);
+            propulsion.erase(propulsion.begin() + i);
+    }
     for(int i=0; i<freeze.size(); ++i)
     {
         freeze[i].tick();
@@ -241,7 +254,7 @@ void initGL(GLFWwindow *window, int width, int height) {
 
     for (int i=0; i < 1000; ++i)
     {
-        platform.push_back(Platform(-7 + i, -7, COLOR_PLATFORM));
+        platform.push_back(Platform(-7 + i, -7));
     }
     for (int i=0; i<10; i += 2)
     {
